@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Versusfy | AI Product Comparison, Exclusive Coupons & Price Alerts</title>
+    <meta name="description" content="Save a fortune with Versusfy's AI. Compare products, find exclusive coupons, and unlock local deals." />
+    <meta property="og:title" content="Versusfy | AI Product Comparison" />
+    <meta property="og:description" content="Become a savings hero. Compare products and find the best deals in your city." />
+    <meta property="og:image" content="/versusfy-hero-og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="text/javascript"></script>
+    <!-- SEO_INJECTION_POINT -->
+    <!-- ANTI-OSANO & CACHE SHIELD v2.2.0 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <script>
+      (function() {
+        console.log("Versusfy Supreme Shield: Neutralizing interference...");
+        
+        // Block Osano more aggressively
+        Object.defineProperty(window, 'osano', {
+          value: { 
+            initialized: true, 
+            cm: { show: function(){}, hide: function(){} },
+            on: function(){}, emit: function(){},
+            version: '2.2.0-OMNI'
+          },
+          writable: false,
+          configurable: false
+        });
+
+        // Neutralize Osano's mutation observer if they try to re-inject
+        const originalMutationObserver = window.MutationObserver;
+        window.MutationObserver = function(callback) {
+          return new originalMutationObserver(function(mutations) {
+            const filteredMutations = mutations.filter(m => {
+              const node = m.target;
+              if (node && node.src && node.src.includes('osano.js')) return false;
+              return true;
+            });
+            if (filteredMutations.length > 0) callback(filteredMutations);
+          });
+        };
+        window.MutationObserver.prototype = originalMutationObserver.prototype;
+
+        // Force purge old cache
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
+        }
+
+        // SVG Protection: Intercept setAttribute to prevent invalid viewBox values
+        const originalSetAttribute = Element.prototype.setAttribute;
+        Element.prototype.setAttribute = function(name, value) {
+          if (name === 'viewBox' && typeof value === 'string' && value.includes('%')) {
+            console.warn('Versusfy Shield: Blocked invalid viewBox injection:', value);
+            return;
+          }
+          return originalSetAttribute.apply(this, arguments);
+        };
+      })();
+    </script>
+    <script type="text/javascript">
+      (function(i,m,p,a,c,t){c.ire_o=p;c[p]=c[p]||function(){(c[p].a=c[p].a||[]).push(arguments)};t=a.createElement(m);var z=a.getElementsByTagName(m)[0];t.async=1;t.src=i;z.parentNode.insertBefore(t,z)})('https://utt.impactcdn.com/P-A7241087-d5d9-4118-a517-0c99b1faeed31.js','script','impactStat',document,window);
+      impactStat('transformLinks');
+      impactStat('trackImpression');
+    </script>
+  </head>
+  <body style="margin:0; padding:0;">
+    <div id="versusfy-v161-root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

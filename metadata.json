@@ -1,0 +1,5 @@
+{
+  "name": "Versusfy",
+  "description": "Versusfy: The world's most advanced AI-powered product comparison engine and real-time deal finder. Experience precision specs battles, price trackers, and expert feature analysis for millions of items. From top tech like iPhone vs Samsung and MacBook vs Windows, to home appliances and fashion, Versusfy delivers the best local deals, exclusive promo codes, and instant price alerts. Stop overpaying and start shopping smarter with our intelligent comparison engine. Your ultimate guide to finding the winner in every product showdown.",
+  "requestFramePermissions": ["geolocation", "microphone", "camera"]
+}

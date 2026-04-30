@@ -1,0 +1,129 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default deny: No one can read or write unless explicitly allowed below.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Connection Test Document - used by the app to verify Firebase setup.
+    match /test/connection {
+      allow read: if true;
+    }
+
+    // ===============================================================
+    // Global Helpers
+    // ===============================================================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      // Hardened ID check: string, max 128 chars, safe chars only.
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    // Marketing Phrases for the homepage headline
+    function isValidPhrase(data) {
+      return data.keys().hasAll(['clicks']) && data.clicks is int;
+    }
+
+    match /marketing_phrases/{phraseId} {
+      allow read: if true;
+      allow create: if isValidId(phraseId) && isValidPhrase(incoming());
+      allow update: if isValidId(phraseId) && 
+                      incoming().diff(existing()).affectedKeys().hasOnly(['clicks']) &&
+                      incoming().clicks == existing().clicks + 1;
+    }
+
+    // Visitor tracking
+    match /visitors/{visitorId} {
+      allow read: if true;
+      allow create, update: if isValidId(visitorId);
+    }
+
+    // AI Comparisons
+    function isValidComparison(data) {
+      return data.keys().hasAll(['title', 'summary']) &&
+             data.title is string && data.title.size() <= 2000 &&
+             data.summary is string && data.summary.size() <= 30000;
+    }
+
+    match /comparisons/{comparisonId} {
+      allow read: if true;
+      allow create, update: if isValidId(comparisonId) && isValidComparison(incoming());
+    }
+
+    // Trending Categories & Votes
+    match /meta/{metaId} {
+      allow read: if true;
+      allow write: if false; // System only
+    }
+
+    match /trending_comparisons/{comparisonId} {
+      allow read: if true;
+      allow write: if false; // System only
+    }
+
+    function isValidVote(data) {
+      return data.keys().hasAll(['totalVotes']) && data.totalVotes is int;
+    }
+
+    match /trending_votes/{comparisonId} {
+      allow read: if true;
+      allow create: if isValidId(comparisonId) && isValidVote(incoming());
+      allow update: if isValidId(comparisonId) && (
+        incoming().totalVotes == existing().totalVotes + 1 &&
+        incoming().diff(existing()).affectedKeys().hasAny([
+          'productA_likes', 'productB_likes', 
+          'productA_dislikes', 'productB_dislikes',
+          'productA_stars', 'productB_stars',
+          'productA_ratingCount', 'productB_ratingCount',
+          'productA_averageRating', 'productB_averageRating',
+          'totalVotes'
+        ])
+      );
+    }
+
+    // User data restricted to owners
+    match /shopping_desires/{desireId} {
+      allow read, write: if isSignedIn() && 
+                          (existing().userId == request.auth.uid || 
+                           incoming().userId == request.auth.uid);
+    }
+
+    match /personal_buyer_alerts/{alertId} {
+      allow read, write: if isSignedIn() && 
+                          (existing().userId == request.auth.uid || 
+                           incoming().userId == request.auth.uid);
+    }
+
+    match /price_alerts/{alertId} {
+      allow create: if true;
+      allow read: if isSignedIn() && (existing().email == request.auth.token.email);
+    }
+
+    match /testimonials/{testimonialId} {
+      allow read: if true;
+      allow create: if true;
+    }
+
+    match /coupons/{couponId} {
+      allow read: if true;
+      allow create: if true;
+    }
+  }
+}
