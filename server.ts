@@ -6,7 +6,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // TACTICAL NODEMAILER FIX
 const createTransporter = (options: any) => {
@@ -40,7 +40,223 @@ async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: "50mb" }));
+  app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // API HEALTH CHECK
+  app.get("/api/health", (req, res) => {
+    res.json({ 
+      status: "alive", 
+      version: "2.2.0-OMNI",
+      time: new Date().toISOString(),
+      keys_detected: [
+        process.env.GEMINI_API_KEY ? 'YES' : 'NO',
+        process.env.VITE_GEMINI_API_KEY ? 'YES' : 'NO',
+        process.env.NEW_GEMINI_API_KEY ? 'YES' : 'NO'
+      ]
+    });
+  });
+
+  // TEST ENDPOINT FOR AI
+  app.get("/api/ai/test", async (req, res) => {
+    const key = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+    if (!key) return res.status(500).json({ error: "No key found in env" });
+    
+    try {
+      const genAI = new GoogleGenerativeAI(key);
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: 'v1beta' });
+      const response = await model.generateContent("Hello, are you alive?");
+      res.json({ success: true, text: response.response.text() });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message, stack: e.stack });
+    }
+  });
+
+  // API: AI Proxy for marketing generation (PRIORITY 1) - v2 to bypass cache
+  app.post("/api/ai/v2/generate", async (req: any, res: any) => {
+    const { model: clientModel, contents, config } = req.body;
+    
+    console.log(`[AI PROXY V2] >>> NEW REQUEST RECEIVED <<<`);
+    console.log(`[AI PROXY V2] Client requested: ${clientModel}`);
+
+    // OBTENCIÓN DE LLAVES (v8.0 - Official SDK Migration)
+    const sources = [
+      { name: 'GEMINI_API_KEY', val: process.env.GEMINI_API_KEY },
+      { name: 'NEW_GEMINI_API_KEY', val: process.env.NEW_GEMINI_API_KEY },
+      { name: 'GEMINI_API_KEY_NEW', val: process.env.GEMINI_API_KEY_NEW },
+      { name: 'GEMINI_API_KEY_RESERVE', val: process.env.GEMINI_API_KEY_RESERVE },
+      { name: 'CLAVE_GEMINI_API_KEY', val: process.env.CLAVE_GEMINI_API_KEY },
+      { name: 'VITE_GEMINI_API_KEY', val: process.env.VITE_GEMINI_API_KEY }
+    ];
+
+    const validKeys = sources
+      .map(s => {
+        let raw = s.val?.toString().trim() || "";
+        const match = raw.match(/AIza[A-Za-z0-9\-_]{30,60}/);
+        return { name: s.name, key: match ? match[0] : null };
+      })
+      .filter(s => s.key);
+
+    if (validKeys.length === 0) {
+      console.error(`[AI PROXY] NO VALID KEYS FOUND IN ENV.`);
+      return res.status(500).json({ 
+        error: "NO_KEYS",
+        message: "❌ ERROR: No hay llaves configuradas. Por favor, revisa los Settings del Applet."
+      });
+    }
+
+    let lastError: any = null;
+
+    for (const keyObj of validKeys) {
+      const apiKey = keyObj.key!;
+      const sourceName = keyObj.name;
+
+      // MODELS TO TRY FOR THIS KEY (v14.0 - Specialized TTS Priority)
+      const isAudioReq = config?.responseModalities?.includes('audio') || 
+                         config?.responseModalities?.includes('AUDIO') || 
+                         (Array.isArray(config?.responseModalities) && config.responseModalities.some((m: any) => String(m).toLowerCase() === 'audio'));
+      
+      const modelsToTry = isAudioReq 
+        ? ["gemini-3.1-flash-tts-preview", "gemini-2.5-flash-preview-tts", "gemini-flash-latest", "gemini-pro-latest"] 
+        : ["gemini-2.0-flash", "gemini-flash-latest", "gemini-2.5-flash", "gemini-pro-latest"];
+
+      for (const modelToUse of modelsToTry) {
+        try {
+          // API Versions to try. Audio modalities are strictly v1beta.
+          const versions = isAudioReq ? ['v1beta'] : ['v1beta', 'v1'];
+          let finalData: any = null;
+          let success = false;
+          let lastTrialError: any = null;
+
+          for (const apiVersion of versions) {
+            try {
+              const url = `https://generativelanguage.googleapis.com/${apiVersion}/models/${modelToUse}:generateContent?key=${apiKey}`;
+
+              // Determine casing based on version
+              // v1 usually expects camelCase, v1beta prefers snake_case for REST
+              const isV1 = apiVersion === 'v1';
+
+              const generationConfig: any = {
+                temperature: 0.7,
+                [isV1 ? 'topP' : 'top_p']: 0.95,
+                [isV1 ? 'topK' : 'top_k']: 40,
+                [isV1 ? 'maxOutputTokens' : 'max_output_tokens']: 2048,
+              };
+
+              if (isAudioReq) {
+                // v1beta JSON REST standard compatibility
+                generationConfig.response_modalities = ["AUDIO"];
+                
+                generationConfig.speech_config = {
+                  voice_config: { 
+                    prebuilt_voice_config: { 
+                      voice_name: (config?.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName || 'Aoide') 
+                    } 
+                  }
+                };
+              } else if (config?.responseMimeType) {
+                generationConfig[isV1 ? 'responseMimeType' : 'response_mime_type'] = config.responseMimeType;
+              }
+
+              const formattedContents = Array.isArray(contents) ? contents.map((c: any) => {
+                if (typeof c === 'string') return { role: 'user', parts: [{ text: c }] };
+                if (c.parts && !c.role) return { role: 'user', parts: c.parts };
+                return c;
+              }) : (typeof contents === 'string' ? [{ role: 'user', parts: [{ text: contents }] }] : 
+                   (contents?.parts && !contents?.role ? [{ role: 'user', parts: contents.parts }] : [contents]));
+
+              const body: any = {
+                contents: formattedContents,
+                generationConfig,
+              };
+
+              if (config?.systemInstruction) {
+                body[isV1 ? 'systemInstruction' : 'system_instruction'] = { parts: [{ text: config.systemInstruction }] };
+              }
+
+              const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+              });
+
+              const responseText = await response.text();
+              if (!response.ok) {
+                // Silently skip expected version incompatibilities
+                if (response.status === 404 || response.status === 400) {
+                   continue;
+                }
+                throw new Error(`HTTP ${response.status} (${apiVersion}): ${responseText}`);
+              }
+
+              finalData = JSON.parse(responseText);
+              success = true;
+              break; // Success, exit versions loop
+            } catch (err: any) {
+              lastTrialError = err;
+              if (err.message.includes('404') || err.message.includes('400')) continue; 
+              throw err; 
+            }
+          }
+
+          if (!success) throw lastTrialError || new Error("All API versions failed for this model");
+
+          const resText = finalData.candidates?.[0]?.content?.parts?.find((p: any) => p.text)?.text || "";
+          const result: any = {
+            text: resText,
+            modelUsed: modelToUse,
+            source: sourceName
+          };
+
+          // Audio Extraction (handle both camelCase and snake_case)
+          const candidates = finalData.candidates || [];
+          const candidateParts = candidates[0]?.content?.parts || [];
+          const audioPart = candidateParts.find((p: any) => 
+            (p.inlineData && p.inlineData.mimeType?.includes('audio')) || 
+            (p.inline_data && p.inline_data.mime_type?.includes('audio'))
+          );
+          
+          if (audioPart) {
+            const data = audioPart.inlineData || audioPart.inline_data;
+            result.audio = data.data;
+            result.audioMimeType = data.mimeType || data.mime_type;
+            const prefix = result.audio.substring(0, 20);
+            console.log(`[AI PROXY V2] SUCCESS: Audio captured (${result.audio ? result.audio.length : 0} bytes, type: ${result.audioMimeType}, prefix: ${prefix}) using ${modelToUse}`);
+          }
+          
+          if (isAudioReq && !result.audio) {
+            console.warn(`[AI PROXY V2] Model ${modelToUse} returned success but no audio data. Next...`);
+            continue;
+          }
+
+          console.log(`[AI PROXY V2] FINAL SUCCESS: ${sourceName} | Model: ${modelToUse}`);
+          return res.json(result);
+
+        } catch (error: any) {
+          lastError = error;
+          const msg = error.message || String(error);
+          console.warn(`[AI PROXY V2] Sub-trial failed: ${sourceName} | Model: ${modelToUse} | Error: ${msg.substring(0, 150)}`);
+          
+          if (msg.includes('404') || msg.includes('not found') || msg.includes('501') || (msg.includes('400') && msg.includes('modality'))) {
+             continue; 
+          }
+          
+          if (msg.includes('429') || msg.includes('403') || msg.includes('permission')) {
+             break; 
+          }
+        }
+      }
+    }
+
+    // Final failure
+    const finalMsg = lastError?.message || String(lastError);
+    console.error(`[AI PROXY] All keys failed. Last error: ${finalMsg}`);
+    res.status(lastError?.status || 500).json({ 
+      error: "AI_PROXY_TOTAL_FAILURE", 
+      message: "Todas las llaves fallaron. " + finalMsg,
+      details: finalMsg
+    });
+  });
 
   // TACTICAL SECURITY: Force HTTPS and Trust Proxy
   app.set("trust proxy", 1);
@@ -174,37 +390,6 @@ async function startServer() {
     } catch (error: any) {
       console.error("Tactical Nodemailer Error:", error);
       res.status(500).json({ error: error.message || "Failed to route message." });
-    }
-  });
-
-  // API: AI Proxy for marketing generation (Required for Railway stability)
-  app.post("/api/ai/generate", async (req: any, res: any) => {
-    const { model, contents, config } = req.body;
-    const apiKey = process.env.GEMINI_API_KEY;
-
-    if (!apiKey) {
-      console.warn("Versusfy: GEMINI_API_KEY missing - AI features will be disabled.");
-      return res.status(500).json({ 
-        error: "GEMINI_API_KEY is not configured. Please add it to your environment variables.",
-        missingKey: true 
-      });
-    }
-
-    try {
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: model || "gemini-3-flash-preview",
-        contents: contents,
-        config: {
-          responseMimeType: config?.responseMimeType || "application/json",
-          systemInstruction: config?.systemInstruction
-        }
-      });
-
-      res.json({ text: response.text });
-    } catch (error: any) {
-      console.error("AI Proxy Error:", error);
-      res.status(500).json({ error: error.message });
     }
   });
 

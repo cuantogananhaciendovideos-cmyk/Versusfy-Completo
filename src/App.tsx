@@ -17,14 +17,16 @@ import { searchGuitarCenterProducts } from './services/guitarcenterService';
 import { searchSweetwaterProducts } from './services/sweetwaterService';
 import { searchMusiciansFriendProducts } from './services/musiciansfriendService';
 import { searchSamAshProducts } from './services/samashService';
-import { Search, Loader2, Info, ShieldCheck, ShieldAlert, Home, Mail, Sun, Moon, RotateCcw, Facebook, Instagram, Twitter, MessageCircle, AtSign, HelpCircle, Users, Clock, Calendar, Globe, Share2, QrCode, Ticket, TrendingDown, Mic, Volume2, VolumeX, ShoppingBag, Calculator, MapPin, Cloud, Sparkles, Zap, CheckCircle2, XCircle, BarChart3, Wand2, Trophy, Coins, Activity, ShieldPlus, Brain, Layout, Utensils, Code, Sprout, Palette, Shovel, Wrench, HardHat, Briefcase, Droplets, Lightbulb, Gamepad2, ChevronDown, Bot, ToyBrick, Rocket, Shirt, Gem, Footprints, Scissors, Brush, Pill, GraduationCap, BookOpen, Car, Music, Headphones } from 'lucide-react';
+import { Search, Loader2, Info, ShieldCheck, ShieldAlert, Home, Mail, Sun, Moon, RotateCcw, Facebook, Instagram, Twitter, MessageCircle, AtSign, HelpCircle, Users, Clock, Calendar, Globe, Share2, QrCode, Ticket, TrendingDown, Mic, Volume2, VolumeX, ShoppingBag, Calculator, MapPin, Cloud, Sparkles, Zap, CheckCircle2, XCircle, BarChart3, Wand2, Trophy, Coins, Activity, ShieldPlus, Brain, Layout, Utensils, Code, Sprout, Palette, Shovel, Wrench, HardHat, Briefcase, Droplets, Lightbulb, Gamepad2, ChevronDown, Bot, ToyBrick, Rocket, Shirt, Gem, Footprints, Scissors, Brush, Pill, GraduationCap, BookOpen, Car, Music, Headphones, Building2, Fuel, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import confetti from 'canvas-confetti';
 import { generateDailyPhrases, getCurrentBannerPhrase, getSubliminalPhrases, trackClick, MarketingPhrase, getDailyTestimonials, Testimonial } from './services/marketingService';
 import { trackVisit, getVisitorStats, VisitorStats } from './services/analyticsService';
+import { speak } from './lib/speech';
 import { db } from './lib/firebase';
 import { doc, getDocFromServer } from 'firebase/firestore';
+import { ensureAudioUnlocked, stopAllVoice } from './services/voiceService';
 import { PriceTracker } from './components/PriceTracker';
 import { CouponTracker } from './components/CouponTracker';
 import { ShareTools } from './components/ShareTools';
@@ -38,8 +40,12 @@ import { OmniAssistant } from './components/OmniAssistant';
 import { HeroStatusShare } from './components/HeroStatusShare';
 import { TrendingWindow } from './components/TrendingWindow';
 import { SavingsCalculator } from './components/SavingsCalculator';
+import { HousingSearch } from './components/HousingSearch';
+import { FuelScout } from './components/FuelScout';
+import { WaterGuardian } from './components/WaterGuardian';
+import { GasMaster } from './components/GasMaster';
 import { getTrendingComparisons, TrendingComparison } from './services/trendsService';
-import { Camera } from 'lucide-react';
+import { Camera, Flame } from 'lucide-react';
 
 interface ComparisonResult {
   title?: string;
@@ -113,7 +119,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [loadingSimilar, setLoadingSimilar] = useState(false);
   const [comparisonCategory, setComparisonCategory] = useState<'standard' | 'prompts' | 'websites' | 'ai_models' | 'restaurants' | 'video_games' | 'toys' | 'jewelry' | 'pharmacy' | 'academic' | 'mechanic' | 'musical' | 'electrician'>('standard');
-  const [view, setView] = useState<'home' | 'about' | 'privacy' | 'contact' | 'faq' | 'benefits' | 'personal-buyer' | 'special-events' | 'global-intel' | 'gardening' | 'mechanic' | 'construction' | 'offices' | 'video-games' | 'toys' | 'jewelry' | 'style-advisor' | 'pharmacy' | 'academic' | 'musical' | 'electrician'>('home');
+  const [view, setView] = useState<'home' | 'about' | 'privacy' | 'contact' | 'faq' | 'benefits' | 'personal-buyer' | 'special-events' | 'global-intel' | 'gardening' | 'mechanic' | 'construction' | 'offices' | 'video-games' | 'toys' | 'jewelry' | 'style-advisor' | 'pharmacy' | 'academic' | 'musical' | 'electrician' | 'housing' | 'fuel' | 'water' | 'gas'>('home');
   const [isIAAgentsOpen, setIsIAAgentsOpen] = useState(false);
   const [contactForm, setContactForm] = useState({ email: '', message: '', _hp: '' });
   const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'sent' | 'error' | 'spam'>('idle');
@@ -131,6 +137,9 @@ export default function App() {
   const [isVisualSearchOpen, setIsVisualSearchOpen] = useState(false);
   const [isOmniMode, setIsOmniMode] = useState(false);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+  const [autoAssistantListen, setAutoAssistantListen] = useState(false);
+  const [agentFilter, setAgentFilter] = useState('All');
+  const [selectedAgentMode, setSelectedAgentMode] = useState<'style' | 'space' | 'gardening' | 'mechanic' | 'builder' | 'office' | 'energy' | undefined>(undefined);
   const [footerStats, setFooterStats] = useState({ savings: 0, deals: 0 });
   const [showHeroShare, setShowHeroShare] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
@@ -143,6 +152,16 @@ export default function App() {
       deals: Math.floor(Math.random() * 5000 + 128450)
     });
   }, []);
+
+  useEffect(() => {
+    if (view === 'style-advisor') setSelectedAgentMode('style');
+    else if (view === 'mechanic') setSelectedAgentMode('mechanic');
+    else if (view === 'construction') setSelectedAgentMode('builder');
+    else if (view === 'offices') setSelectedAgentMode('office');
+    else if (view === 'gardening') setSelectedAgentMode('gardening');
+    else if (view === 'pharmacy') setSelectedAgentMode('pharmacy');
+    // ... other mappings if needed
+  }, [view]);
 
   const startListening = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -689,7 +708,7 @@ const ComparisonResultView = ({
     }
 
     const testConnection = async () => {
-      if (!db || (typeof db.collection !== 'function' && !db.type)) {
+      if (!db) {
         console.log("Firebase: Skipping connectivity test (not initialized).");
         return;
       }
@@ -867,16 +886,19 @@ const ComparisonResultView = ({
         console.warn("Geolocation not available or denied", e);
       }
       
-      const result = await compareProducts(
+      const result = (await compareProducts(
         isOmniMode ? `[OMNI-MODE] ${productA}` : productA, 
         productB, 
         location,
         comparisonCategory
-      );
+      )) as ComparisonResult;
       if (!result) {
         throw new Error("No comparison result returned from AI service.");
       }
       setComparison(result);
+      if (result.verdict) {
+        speak(result.verdict);
+      }
 
       // Fetch retailer data only for standard products
       if (['standard', 'video_games', 'toys', 'jewelry', 'pharmacy', 'academic', 'mechanic', 'musical'].includes(comparisonCategory)) {
@@ -1050,6 +1072,22 @@ const ComparisonResultView = ({
                     <p className="text-xs">We have dedicated windows for every domain: <strong>Mechanic Scout</strong> (vehicles), <strong>Master Builder</strong> (construction), <strong>Gardening Scout</strong> (landscape), <strong>Space Architect</strong> (interior design), and even a <strong>Recipe Budget Consultant</strong> to calculate your meal costs at Walmart USA.</p>
                   </div>
                   <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
+                    <h5 className="font-bold text-amber-600 text-xs uppercase mb-2">● Strategic Housing Locator</h5>
+                    <p className="text-xs">The <strong>Versusfy Housing</strong> unit scans the USA for active rent and sale opportunities. It automatically detects your city via IP to find homes that match your budget and location needs, with direct contact data for landlords or agents.</p>
+                  </div>
+                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
+                    <h5 className="font-bold text-amber-500 text-xs uppercase mb-2">● Fuel Scout (Tactical Fuel Audit)</h5>
+                    <p className="text-xs">The <strong>Fuel Scout</strong> monitors regional gas prices in real-time. By detecting your location, it audits the cheapest gas stations nearby, providing prices for all fuel types and direct GPS navigation to maximize your daily savings.</p>
+                  </div>
+                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
+                    <h5 className="font-bold text-blue-500 text-xs uppercase mb-2">● Water Guardian (Consumption Intelligence)</h5>
+                    <p className="text-xs">The <strong>Water Guardian</strong> analyzes your water bills via computer vision. It identifies over-consumption patterns and provides highly effective tactical countermeasures to reduce your monthly costs through hydraulic efficiency.</p>
+                  </div>
+                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
+                    <h5 className="font-bold text-orange-500 text-xs uppercase mb-2">● Gas Master (Cooking Efficiency)</h5>
+                    <p className="text-xs">The <strong>Gas Master</strong> audits your gaseous energy consumption. By analyzing your cooking and heating bills, it deploys thermal efficiency strategies to drastically reduce waste and maximize every penny spent on energy.</p>
+                  </div>
+                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
                     <h5 className="font-bold text-amber-600 text-xs uppercase mb-2">● Economic Guard Units</h5>
                     <p className="text-xs">The <strong>Coupon Tracker</strong> and <strong>Price Tracking</strong> systems continuously monitor the market to ensure the tactical offers you receive are the absolute best available in real-time.</p>
                   </div>
@@ -1066,6 +1104,10 @@ const ComparisonResultView = ({
                   <li><span className="text-purple-500">●</span> <strong>Academic Master:</strong> Best Buy, Walmart, Amazon, Office Depot.</li>
                   <li><span className="text-purple-500">●</span> <strong>Musical Scout:</strong> Guitar Center, Sweetwater, Amazon, eBay.</li>
                   <li><span className="text-purple-500">●</span> <strong>Electrician Scout:</strong> Best Buy, Home Depot, Walmart, Amazon.</li>
+                  <li><span className="text-purple-500">●</span> <strong>Housing Locator:</strong> Active Rent & Sale Tactical Database (USA).</li>
+                  <li><span className="text-purple-500">●</span> <strong>Fuel Scout:</strong> Real-time USA Gas Price Audit.</li>
+                  <li><span className="text-purple-500">●</span> <strong>Water Guardian:</strong> Visual Bill Analysis & Hydraulic Efficiency.</li>
+                  <li><span className="text-purple-500">●</span> <strong>Gas Master:</strong> Thermal Efficiency & Gas Bill Audit.</li>
                 </ul>
               </div>
               <div className="bg-emerald-green/5 p-6 rounded-2xl border border-emerald-green/20">
@@ -1265,6 +1307,7 @@ const ComparisonResultView = ({
               <li><strong>Select Product B:</strong> Choose a similar product from the dropdown menu that appears.</li>
               <li><strong>Compare:</strong> Click the "Compare" button.</li>
               <li><strong>Analyze:</strong> Review the AI-generated comparison and check specific scores, specs, and the final expert verdict.</li>
+              <li><strong>Find Your New Home:</strong> Navigate to <strong>IA Agents</strong> and select <strong>"Housing Locator"</strong>. Enter your city and budget to find active rent/sale listings with direct contact info and map integration.</li>
               <li><strong>Unlock & Save:</strong> Click the "Unlock Bundle" button to reveal exclusive coupons and GEO-targeted offers.</li>
               <li><strong>Buy & Track:</strong> Purchase through our links to get these deals and activate your <strong>Free Price Alert</strong> for that product.</li>
               <li><strong>Audit Your Savings:</strong> Click the <strong>"Savings Calculator"</strong> button. Enter your spending data to see your regional economic audit.</li>
@@ -1501,6 +1544,22 @@ const ComparisonResultView = ({
                 <p>Yes, Versusfy is completely free to use.</p>
               </div>
               <div>
+                <h4 className="font-semibold text-neutral-900 dark:text-white">Can Versusfy help me find a home or apartment?</h4>
+                <p>Yes. Our <strong>Housing Search</strong> tool is designed specifically for families in the USA. It filters listings for rent or sale based on your budget and city, providing direct contact information (phone and email) of the renter or seller, and integrates with Google Maps for easy location tracking.</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-neutral-900 dark:text-white">How does the Fuel Scout help me save money?</h4>
+                <p>The <strong>Fuel Scout</strong> audits gas station prices in your specific city or zip code in real-time. It identifies the cheapest fuels (Regular, Premium, Diesel) and provides direct GPS links so you can navigate to the station with the lowest prices immediately, saving you money on every fill-up.</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-neutral-900 dark:text-white">Can Water Guardian really reduce my water bill?</h4>
+                <p>Absolutely. By uploading a photo of your bill, the <strong>Water Guardian</strong> identifies patterns that usually go unnoticed. It provides practical, high-impact strategies specifically for your level of consumption, helping you save dozens of dollars every month by optimizing your home's hydraulic usage.</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-neutral-900 dark:text-white">Is Gas Master effective for cooking gas?</h4>
+                <p>Yes. <strong>Gas Master</strong> is designed to analyze both natural gas bills and cooking patterns. It provides tactical advice on thermal retention and heat management that can reduce your cooking gas consumption by up to 20-30%, resulting in immediate savings for your household budget.</p>
+              </div>
+              <div>
                 <h4 className="font-semibold text-neutral-900 dark:text-white">What is the Omni-Assistant?</h4>
                 <p>The <strong>Omni-Assistant</strong> is your personal AI companion represented by the pulsating sphere. She can talk, listen to your voice commands, and perform complex comparisons across any domain. She is designed to be your constant advisor in the Versusfy ecosystem.</p>
               </div>
@@ -1706,10 +1765,30 @@ const ComparisonResultView = ({
           </motion.section>
         );
       case 'personal-buyer':
-        return <PersonalBuyer />;
+        return (
+          <div className="w-full max-w-7xl mx-auto space-y-6 px-4">
+            <div className="flex justify-start">
+              <button 
+                onClick={() => setView('home')}
+                className="p-3 bg-white dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg border border-neutral-200 dark:border-neutral-700"
+              >
+                <X size={20} /> Close Unit
+              </button>
+            </div>
+            <PersonalBuyer />
+          </div>
+        );
       case 'special-events':
         return (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="w-full max-w-7xl mx-auto space-y-12 px-4 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+             <div className="flex justify-start">
+              <button 
+                onClick={() => setView('home')}
+                className="p-3 bg-white dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg border border-neutral-200 dark:border-neutral-700"
+              >
+                <X size={20} /> Close Unit
+              </button>
+            </div>
             <EventSuggestions />
             <RecipeBudgetConsultant />
           </div>
@@ -1722,13 +1801,30 @@ const ComparisonResultView = ({
             className="w-full max-w-4xl mx-auto space-y-12 pb-20"
           >
             <div className="text-center space-y-6">
-              <div className="inline-block p-6 bg-emerald-green/10 rounded-[2.5rem] border-4 border-emerald-green/20 relative">
-                <Sprout className="text-emerald-green w-16 h-16" />
-                <div className="absolute -top-4 -right-4 bg-apple-red text-white text-[10px] font-black px-3 py-1 rounded-full rotate-12 shadow-xl border-2 border-white dark:border-neutral-900">
-                  TACTICAL SCAN
+              <div className="flex justify-between items-start mb-8">
+                <button 
+                  onClick={() => setView('home')}
+                  className="p-3 bg-neutral-100 dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg"
+                >
+                  <X size={20} /> Close Unit
+                </button>
+                <div className="inline-block p-6 bg-emerald-green/10 rounded-[2.5rem] border-4 border-emerald-green/20 relative">
+                  <Sprout className="text-emerald-green w-16 h-16" />
+                  <div className="absolute -top-4 -right-4 bg-apple-red text-white text-[10px] font-black px-3 py-1 rounded-full rotate-12 shadow-xl border-2 border-white dark:border-neutral-900">
+                    TACTICAL SCAN
+                  </div>
                 </div>
+                <div className="w-12 h-12" /> {/* Spacer */}
               </div>
               <h2 className="text-5xl md:text-6xl font-black text-neutral-900 dark:text-white uppercase tracking-tighter italic">Gardening Scout</h2>
+              <div className="flex justify-center gap-4">
+                <button 
+                  onClick={() => { setSelectedAgentMode('gardening'); setAutoAssistantListen(true); setIsAssistantOpen(true); }}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-green/10 text-emerald-green rounded-full border border-emerald-green/20 hover:bg-emerald-green text-[10px] font-black uppercase tracking-widest hover:text-white transition-all shadow-lg shadow-emerald-500/10"
+                >
+                  <Mic size={14} /> Talk to Gardening Scout
+                </button>
+              </div>
               <p className="text-neutral-500 font-medium max-w-xl mx-auto">Turn your outdoor terrain into a Supreme Garden. Scan your space for plants, soil amendments, and irrigation systems from Walmart, Home Depot, and Amazon.</p>
             </div>
 
@@ -1785,13 +1881,30 @@ const ComparisonResultView = ({
             className="w-full max-w-4xl mx-auto space-y-12 pb-20"
           >
             <div className="text-center space-y-6">
-              <div className="inline-block p-6 bg-pink-500/10 rounded-[2.5rem] border-4 border-pink-500/20 relative">
-                <Sparkles className="text-pink-500 w-16 h-16" />
-                <div className="absolute -top-4 -right-4 bg-emerald-green text-white text-[10px] font-black px-3 py-1 rounded-full -rotate-12 shadow-xl border-2 border-white dark:border-neutral-900">
-                  STYLE SCAN
+              <div className="flex justify-between items-start mb-8">
+                <button 
+                  onClick={() => setView('home')}
+                  className="p-3 bg-neutral-100 dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg"
+                >
+                  <X size={20} /> Close Unit
+                </button>
+                <div className="inline-block p-6 bg-pink-500/10 rounded-[2.5rem] border-4 border-pink-500/20 relative">
+                  <Sparkles className="text-pink-500 w-16 h-16" />
+                  <div className="absolute -top-4 -right-4 bg-emerald-green text-white text-[10px] font-black px-3 py-1 rounded-full -rotate-12 shadow-xl border-2 border-white dark:border-neutral-900">
+                    STYLE SCAN
+                  </div>
                 </div>
+                <div className="w-12 h-12" /> {/* Spacer */}
               </div>
               <h2 className="text-5xl md:text-6xl font-black text-neutral-900 dark:text-white uppercase tracking-tighter italic">Style Advisor</h2>
+              <div className="flex justify-center gap-4">
+                <button 
+                  onClick={() => { setSelectedAgentMode('style'); setAutoAssistantListen(true); setIsAssistantOpen(true); }}
+                  className="flex items-center gap-2 px-4 py-2 bg-pink-500/10 text-pink-500 rounded-full border border-pink-500/20 hover:bg-pink-500 text-[10px] font-black uppercase tracking-widest hover:text-white transition-all shadow-lg shadow-pink-500/10"
+                >
+                  <Mic size={14} /> Talk to Style Advisor
+                </button>
+              </div>
               <p className="text-neutral-500 font-medium max-w-xl mx-auto">Your supreme personal stylist. Analyze your skin tone and features for the perfect makeup (pinturas), clothing (ropa), jewelry (joyería), footwear, hair style (cabello), and nails (manicure/pedicure).</p>
             </div>
 
@@ -1804,17 +1917,21 @@ const ComparisonResultView = ({
                 { icon: Scissors, title: 'Hair Style', desc: 'Cuts, colors, and accessories for hair (Cabello).' },
                 { icon: Brush, title: 'Nails & Spa', desc: 'Manicure and Pedicure tactical analysis (Uñas).' }
               ].map((f, i) => (
-                <div key={i} className="p-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl hover:border-pink-500 transition-colors group">
+                <button 
+                  key={i} 
+                  onClick={() => { setSelectedAgentMode('style'); setIsVisualSearchOpen(true); }}
+                  className="p-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl hover:border-pink-500 transition-all group text-left active:scale-95"
+                >
                    <f.icon className="text-pink-500 mb-4 group-hover:scale-110 transition-transform" size={24} />
                    <h4 className="font-black uppercase tracking-tighter text-neutral-900 dark:text-white mb-2 text-sm">{f.title}</h4>
                    <p className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-relaxed font-medium uppercase tracking-wider">{f.desc}</p>
-                </div>
+                </button>
               ))}
             </div>
 
             <div className="flex justify-center flex-col items-center gap-6">
               <button 
-                onClick={() => setIsVisualSearchOpen(true)}
+                onClick={() => { setSelectedAgentMode('style'); setIsVisualSearchOpen(true); }}
                 className="group relative px-12 py-6 bg-pink-500 text-white font-black rounded-3xl text-xl uppercase tracking-tighter shadow-2xl shadow-pink-500/20 flex items-center gap-4 hover:bg-pink-600 transition-all active:scale-95"
               >
                 <Camera size={28} />
@@ -1833,13 +1950,30 @@ const ComparisonResultView = ({
             className="w-full max-w-4xl mx-auto space-y-12 pb-20"
           >
             <div className="text-center space-y-6">
-              <div className="inline-block p-6 bg-red-600/10 rounded-[2.5rem] border-4 border-red-600/20 relative">
-                <Wrench className="text-red-600 w-16 h-16" />
-                <div className="absolute -top-4 -right-4 bg-emerald-green text-white text-[10px] font-black px-3 py-1 rounded-full -rotate-12 shadow-xl border-2 border-white dark:border-neutral-900">
-                  AUTO SCAN
+              <div className="flex justify-between items-start mb-8">
+                <button 
+                  onClick={() => setView('home')}
+                  className="p-3 bg-neutral-100 dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg"
+                >
+                  <X size={20} /> Close Unit
+                </button>
+                <div className="inline-block p-6 bg-red-600/10 rounded-[2.5rem] border-4 border-red-600/20 relative">
+                  <Wrench className="text-red-600 w-16 h-16" />
+                  <div className="absolute -top-4 -right-4 bg-emerald-green text-white text-[10px] font-black px-3 py-1 rounded-full -rotate-12 shadow-xl border-2 border-white dark:border-neutral-900">
+                    AUTO SCAN
+                  </div>
                 </div>
+                <div className="w-12 h-12" /> {/* Spacer */}
               </div>
               <h2 className="text-5xl md:text-6xl font-black text-neutral-900 dark:text-white uppercase tracking-tighter italic">Mechanic Scout</h2>
+              <div className="flex justify-center gap-4">
+                <button 
+                  onClick={() => { setSelectedAgentMode('mechanic'); setAutoAssistantListen(true); setIsAssistantOpen(true); }}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600/10 text-red-600 rounded-full border border-red-600/20 hover:bg-red-600 text-[10px] font-black uppercase tracking-widest hover:text-white transition-all shadow-lg shadow-red-600/10"
+                >
+                  <Mic size={14} /> Talk to Mech Scout
+                </button>
+              </div>
               <p className="text-neutral-500 font-medium max-w-xl mx-auto">Master your machine. Point at engines, warning lights, or damage for instant diagnostics and tactical part sourcing from AutoZone, Pep Boys, Advance Auto, and O'Reilly.</p>
             </div>
 
@@ -1896,6 +2030,14 @@ const ComparisonResultView = ({
             animate={{ opacity: 1, scale: 1 }}
             className="w-full max-w-4xl mx-auto space-y-12 pb-20"
           >
+             <div className="flex justify-start px-4">
+              <button 
+                onClick={() => setView('home')}
+                className="p-3 bg-white dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg border border-neutral-200 dark:border-neutral-700"
+              >
+                <X size={20} /> Close Unit
+              </button>
+            </div>
             <div className="text-center space-y-6">
               <div className="inline-block p-6 bg-orange-500/10 rounded-[2.5rem] border-4 border-orange-500/20 relative">
                 <HardHat className="text-orange-500 w-16 h-16" />
@@ -1904,6 +2046,14 @@ const ComparisonResultView = ({
                 </div>
               </div>
               <h2 className="text-5xl md:text-6xl font-black text-neutral-900 dark:text-white uppercase tracking-tighter italic">Master Builder</h2>
+              <div className="flex justify-center gap-4">
+                <button 
+                  onClick={() => { setSelectedAgentMode('builder'); setAutoAssistantListen(true); setIsAssistantOpen(true); }}
+                  className="flex items-center gap-2 px-4 py-2 bg-orange-500/10 text-orange-500 rounded-full border border-orange-500/20 hover:bg-orange-500 text-[10px] font-black uppercase tracking-widest hover:text-white transition-all shadow-lg shadow-orange-500/10"
+                >
+                   <Mic size={14} /> Talk to Master Builder
+                </button>
+              </div>
               <p className="text-neutral-500 font-medium max-w-xl mx-auto">Command your project site. Scan structures and materials to predict project phases and source materials in bulk from industrial suppliers.</p>
             </div>
 
@@ -1959,6 +2109,14 @@ const ComparisonResultView = ({
             animate={{ opacity: 1, scale: 1 }}
             className="w-full max-w-4xl mx-auto space-y-12 pb-20"
           >
+             <div className="flex justify-start px-4">
+              <button 
+                onClick={() => setView('home')}
+                className="p-3 bg-white dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg border border-neutral-200 dark:border-neutral-700"
+              >
+                <X size={20} /> Close Unit
+              </button>
+            </div>
             <div className="text-center space-y-6">
               <div className="inline-block p-6 bg-indigo-500/10 rounded-[2.5rem] border-4 border-indigo-500/20 relative">
                 <Briefcase className="text-indigo-500 w-16 h-16" />
@@ -2022,6 +2180,14 @@ const ComparisonResultView = ({
             animate={{ opacity: 1, scale: 1 }}
             className="w-full max-w-4xl mx-auto space-y-12 pb-20"
           >
+             <div className="flex justify-start px-4">
+              <button 
+                onClick={() => setView('home')}
+                className="p-3 bg-white dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg border border-neutral-200 dark:border-neutral-700"
+              >
+                <X size={20} /> Close Unit
+              </button>
+            </div>
             <div className="text-center space-y-6">
               <div className="inline-block p-6 bg-yellow-500/10 rounded-[2.5rem] border-4 border-yellow-500/20 relative">
                 <ToyBrick className="text-yellow-500 w-16 h-16" />
@@ -2085,6 +2251,14 @@ const ComparisonResultView = ({
             animate={{ opacity: 1, scale: 1 }}
             className="w-full max-w-4xl mx-auto space-y-12 pb-20"
           >
+             <div className="flex justify-start px-4">
+              <button 
+                onClick={() => setView('home')}
+                className="p-3 bg-white dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg border border-neutral-200 dark:border-neutral-700"
+              >
+                <X size={20} /> Close Unit
+              </button>
+            </div>
             <div className="text-center space-y-6">
               <div className="inline-block p-6 bg-purple-500/10 rounded-[2.5rem] border-4 border-purple-500/20 relative">
                 <Gamepad2 className="text-purple-500 w-16 h-16" />
@@ -2148,6 +2322,14 @@ const ComparisonResultView = ({
             animate={{ opacity: 1, scale: 1 }}
             className="w-full max-w-4xl mx-auto space-y-12 pb-20"
           >
+             <div className="flex justify-start px-4">
+              <button 
+                onClick={() => setView('home')}
+                className="p-3 bg-white dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg border border-neutral-200 dark:border-neutral-700"
+              >
+                <X size={20} /> Close Unit
+              </button>
+            </div>
             <div className="text-center space-y-6">
               <div className="inline-block p-6 bg-emerald-500/10 rounded-[2.5rem] border-4 border-emerald-500/20 relative">
                 <Pill className="text-emerald-500 w-16 h-16" />
@@ -2175,7 +2357,7 @@ const ComparisonResultView = ({
 
             <div className="flex justify-center flex-col items-center gap-6">
               <button 
-                onClick={() => setIsVisualSearchOpen(true)}
+                onClick={() => { setSelectedAgentMode('pharmacy'); setIsVisualSearchOpen(true); }}
                 className="group relative px-12 py-6 bg-emerald-600 text-white font-black rounded-3xl text-xl uppercase tracking-tighter shadow-2xl shadow-emerald-500/20 flex items-center gap-4 hover:bg-emerald-700 transition-all active:scale-95"
               >
                 <Camera size={28} />
@@ -2190,14 +2372,23 @@ const ComparisonResultView = ({
                     placeholder="Enter medication name or active ingredient..."
                     value={productB}
                     onChange={(e) => setProductB(e.target.value)}
-                    className="w-full bg-white dark:bg-neutral-900 border-2 border-dashed border-emerald-600/20 p-6 rounded-3xl outline-none focus:border-emerald-600 transition-all text-neutral-900 dark:text-white font-bold pr-16"
+                    onKeyDown={(e) => { if (e.key === 'Enter') { setSelectedAgentMode('pharmacy'); setIsVisualSearchOpen(true); } }}
+                    className="w-full bg-white dark:bg-neutral-900 border-2 border-dashed border-emerald-600/20 p-6 rounded-3xl outline-none focus:border-emerald-600 transition-all text-neutral-900 dark:text-white font-bold pr-32"
                   />
-                  <button 
-                    onClick={startListening}
-                    className={`absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-2xl transition ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-500/10'}`}
-                  >
-                    <Mic size={20} />
-                  </button>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-2">
+                    <button 
+                      onClick={startListening}
+                      className={`p-3 rounded-2xl transition ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 hover:text-emerald-600 shadow-sm'}`}
+                    >
+                      <Mic size={20} />
+                    </button>
+                    <button 
+                       onClick={() => { setSelectedAgentMode('pharmacy'); setIsVisualSearchOpen(true); }}
+                       className="bg-emerald-600 text-white px-4 py-2 rounded-2xl font-black uppercase text-[10px] tracking-tighter hover:bg-emerald-700 transition shadow-lg shadow-emerald-500/10"
+                    >
+                      Analyze
+                    </button>
+                  </div>
                 </div>
                 <p className="text-center text-[10px] text-neutral-500 uppercase font-bold tracking-widest mt-2">Health Data Extraction Active</p>
               </div>
@@ -2211,6 +2402,14 @@ const ComparisonResultView = ({
             animate={{ opacity: 1, scale: 1 }}
             className="w-full max-w-4xl mx-auto space-y-12 pb-20"
           >
+             <div className="flex justify-start px-4">
+              <button 
+                onClick={() => setView('home')}
+                className="p-3 bg-white dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg border border-neutral-200 dark:border-neutral-700"
+              >
+                <X size={20} /> Close Unit
+              </button>
+            </div>
             <div className="text-center space-y-6">
               <div className="inline-block p-6 bg-blue-500/10 rounded-[2.5rem] border-4 border-blue-500/20 relative">
                 <GraduationCap className="text-blue-500 w-16 h-16" />
@@ -2271,6 +2470,14 @@ const ComparisonResultView = ({
       case 'musical':
         return (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-4xl mx-auto space-y-8 md:space-y-12 mb-20 px-4">
+             <div className="flex justify-start">
+              <button 
+                onClick={() => setView('home')}
+                className="p-3 bg-white dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg border border-neutral-200 dark:border-neutral-700"
+              >
+                <X size={20} /> Close Unit
+              </button>
+            </div>
             <div className="text-center space-y-4">
               <div className="inline-flex items-center gap-3 bg-amber-500/10 text-amber-500 px-6 py-2 rounded-full border border-amber-500/20">
                 <Music size={20} />
@@ -2314,6 +2521,14 @@ const ComparisonResultView = ({
       case 'electrician':
         return (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-4xl mx-auto space-y-8 md:space-y-12 mb-20 px-4">
+             <div className="flex justify-start">
+              <button 
+                onClick={() => setView('home')}
+                className="p-3 bg-white dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg border border-neutral-200 dark:border-neutral-700"
+              >
+                <X size={20} /> Close Unit
+              </button>
+            </div>
             <div className="text-center space-y-4">
               <div className="inline-flex items-center gap-3 bg-yellow-400/10 text-yellow-400 px-6 py-2 rounded-full border border-yellow-400/20">
                 <Zap size={20} />
@@ -2325,11 +2540,11 @@ const ComparisonResultView = ({
 
             <div className="flex flex-col items-center gap-8">
               <button 
-                onClick={() => setIsVisualSearchOpen(true)}
+                onClick={() => { setSelectedAgentMode('energy'); setIsVisualSearchOpen(true); }}
                 className="group relative px-12 py-6 bg-yellow-400 text-black font-black rounded-3xl text-xl uppercase tracking-tighter shadow-2xl shadow-yellow-400/20 flex items-center gap-4 hover:bg-yellow-500 transition-all active:scale-95"
               >
                 <Camera size={28} />
-                <span>Analyze Appliance (Camera/Image)</span>
+                <span>Analyze Bill / Appliance (Camera)</span>
                 <div className="absolute inset-0 rounded-3xl border-2 border-yellow-400/50 opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all" />
               </button>
 
@@ -2340,18 +2555,103 @@ const ComparisonResultView = ({
                     placeholder="Enter appliance model or description (e.g., '10-year-old Samsung fridge')..."
                     value={productB}
                     onChange={(e) => setProductB(e.target.value)}
-                    className="w-full bg-white dark:bg-neutral-900 border-2 border-dashed border-yellow-400/20 p-6 rounded-3xl outline-none focus:border-yellow-500 transition-all text-neutral-900 dark:text-white font-bold pr-16"
+                    onKeyDown={(e) => { if (e.key === 'Enter') { setSelectedAgentMode('energy'); setIsVisualSearchOpen(true); } }}
+                    className="w-full bg-white dark:bg-neutral-900 border-2 border-dashed border-yellow-400/20 p-6 rounded-3xl outline-none focus:border-yellow-500 transition-all text-neutral-900 dark:text-white font-bold pr-32"
                   />
-                  <button 
-                     onClick={startListening}
-                     className={`absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-2xl transition ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-yellow-400 text-black hover:bg-yellow-500 shadow-lg shadow-yellow-400/10'}`}
-                  >
-                    <Mic size={20} />
-                  </button>
+                  <div className="absolute right-3 top-1/2 -track-y-1/2 flex gap-2 -translate-y-1/2">
+                    <button 
+                       onClick={startListening}
+                       className={`p-3 rounded-2xl transition ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 hover:text-yellow-400 shadow-sm'}`}
+                    >
+                      <Mic size={20} />
+                    </button>
+                    <button 
+                       onClick={() => { setSelectedAgentMode('energy'); setIsVisualSearchOpen(true); }}
+                       className="bg-yellow-400 text-black px-4 py-2 rounded-2xl font-black uppercase text-[10px] tracking-tighter hover:bg-yellow-500 transition shadow-lg shadow-yellow-400/10"
+                    >
+                      Analyze
+                    </button>
+                  </div>
                 </div>
                 <p className="text-center text-[10px] text-neutral-500 uppercase font-bold tracking-widest mt-2">Tactical Energy Analysis Active</p>
               </div>
             </div>
+          </motion.div>
+        );
+      case 'housing':
+        return (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-4xl mx-auto pb-20"
+          >
+             <div className="flex justify-start mb-6 px-4">
+              <button 
+                onClick={() => setView('home')}
+                className="p-3 bg-white dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg border border-neutral-200 dark:border-neutral-700"
+              >
+                <X size={20} /> Close Unit
+              </button>
+            </div>
+            <HousingSearch 
+              detectedCity={detectedCity || ''} 
+              userName={heroName} 
+              onClose={() => setView('home')} 
+            />
+          </motion.div>
+        );
+      case 'fuel':
+        return (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-4xl mx-auto pb-20 px-4"
+          >
+             <div className="flex justify-start mb-6">
+              <button 
+                onClick={() => setView('home')}
+                className="p-3 bg-white dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg border border-neutral-200 dark:border-neutral-700"
+              >
+                <X size={20} /> Close Unit
+              </button>
+            </div>
+            <FuelScout detectedCity={detectedCity || ''} onClose={() => setView('home')} userName={heroName} />
+          </motion.div>
+        );
+      case 'water':
+        return (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-4xl mx-auto pb-20 px-4"
+          >
+             <div className="flex justify-start mb-6">
+              <button 
+                onClick={() => setView('home')}
+                className="p-3 bg-white dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg border border-neutral-200 dark:border-neutral-700"
+              >
+                <X size={20} /> Close Unit
+              </button>
+            </div>
+            <WaterGuardian onClose={() => setView('home')} userName={heroName} />
+          </motion.div>
+        );
+      case 'gas':
+        return (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-4xl mx-auto pb-20 px-4"
+          >
+             <div className="flex justify-start mb-6">
+              <button 
+                onClick={() => setView('home')}
+                className="p-3 bg-white dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg border border-neutral-200 dark:border-neutral-700"
+              >
+                <X size={20} /> Close Unit
+              </button>
+            </div>
+            <GasMaster onClose={() => setView('home')} userName={heroName} />
           </motion.div>
         );
       default:
@@ -2699,26 +2999,58 @@ const ComparisonResultView = ({
                 initial={{ opacity: 0, scale: 0.9, x: -20, transformOrigin: 'top left' }}
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.9, x: -20 }}
-                className="absolute top-full left-0 mt-3 w-72 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] overflow-y-auto max-h-[70vh] p-3 space-y-1 z-50 backdrop-blur-xl bg-opacity-95 dark:bg-opacity-95 custom-scrollbar"
+                className="absolute top-full left-0 mt-3 w-72 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] overflow-y-auto max-h-[70vh] p-3 space-y-1 z-50 backdrop-blur-xl bg-opacity-95 dark:bg-opacity-95 custom-scrollbar pb-6"
               >
-                <div className="px-4 py-2 mb-2">
-                  <h4 className="text-[10px] font-black text-neutral-400 uppercase tracking-[.2em]">Operational Units</h4>
+                <div className="px-4 py-3 mb-2 flex justify-between items-center sticky top-0 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md z-10 pt-4 border-b border-neutral-100 dark:border-neutral-800">
+                  <div>
+                    <h4 className="text-[10px] font-black text-neutral-400 uppercase tracking-[.2em]">Operational Units</h4>
+                    <p className="text-[8px] font-bold text-emerald-green uppercase tracking-widest mt-0.5">Deployment Ready</p>
+                  </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setIsIAAgentsOpen(false); }}
+                    className="p-2 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-xl text-neutral-500 hover:text-red-500 transition-all shadow-sm"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                <div className="flex gap-2 overflow-x-auto pb-4 pt-2 px-2 no-scrollbar scroll-smooth">
+                  {[
+                    { label: 'All', icon: Bot },
+                    { label: 'Shop', icon: ShoppingBag },
+                    { label: 'Home', icon: Home },
+                    { label: 'Tech', icon: Zap },
+                    { label: 'Style', icon: Sparkles }
+                  ].map((cat, i) => (
+                    <button 
+                      key={i} 
+                      onClick={() => setAgentFilter(cat.label)}
+                      className={`flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${agentFilter === cat.label ? 'bg-emerald-green text-white' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-700'}`}
+                    >
+                      <cat.icon size={12} />
+                      {cat.label}
+                    </button>
+                  ))}
                 </div>
                 {[
-                  { view: 'personal-buyer', label: 'My Personal Buyer', icon: ShoppingBag, color: 'text-emerald-green', bg: 'hover:bg-emerald-green/5' },
-                  { view: 'style-advisor', label: 'Style Advisor', icon: Sparkles, color: 'text-pink-500', bg: 'hover:bg-pink-500/5' },
-                  { view: 'special-events', label: 'Special Events', icon: Sparkles, color: 'text-purple-500', bg: 'hover:bg-purple-500/5' },
-                  { view: 'gardening', label: 'Gardening Scout', icon: Sprout, color: 'text-green-500', bg: 'hover:bg-green-500/5' },
-                  { view: 'mechanic', label: 'Mechanic Scout', icon: Wrench, color: 'text-red-600', bg: 'hover:bg-red-600/5' },
-                  { view: 'construction', label: 'Master Builder', icon: HardHat, color: 'text-orange-500', bg: 'hover:bg-orange-500/5' },
-                  { view: 'offices', label: 'Office Productivity', icon: Briefcase, color: 'text-indigo-500', bg: 'hover:bg-indigo-500/5' },
-                  { view: 'video-games', label: 'Video Games Assistant', icon: Gamepad2, color: 'text-pink-600', bg: 'hover:bg-pink-600/5' },
-                  { view: 'toys', label: 'Toy Scout', icon: ToyBrick, color: 'text-yellow-500', bg: 'hover:bg-yellow-500/5' },
-                  { view: 'pharmacy', label: 'Pharmacy Scout', icon: Pill, color: 'text-emerald-500', bg: 'hover:bg-emerald-500/5' },
-                  { view: 'academic', label: 'Academic Master', icon: GraduationCap, color: 'text-blue-500', bg: 'hover:bg-blue-500/5' },
-                  { view: 'musical', label: 'Musical Scout', icon: Music, color: 'text-amber-500', bg: 'hover:bg-amber-500/5' },
-                  { view: 'electrician', label: 'Electrician Scout', icon: Zap, color: 'text-yellow-400', bg: 'hover:bg-yellow-400/5' },
-                ].map((agent: any) => (
+                  { view: 'personal-buyer', label: 'My Personal Buyer', icon: ShoppingBag, color: 'text-emerald-green', bg: 'hover:bg-emerald-green/5', category: 'Shop' },
+                  { view: 'style-advisor', label: 'Style Advisor', icon: Sparkles, color: 'text-pink-500', bg: 'hover:bg-pink-500/5', category: 'Style' },
+                  { view: 'special-events', label: 'Special Events', icon: Sparkles, color: 'text-purple-500', bg: 'hover:bg-purple-500/5', category: 'Home' },
+                  { view: 'gardening', label: 'Gardening Scout', icon: Sprout, color: 'text-green-500', bg: 'hover:bg-green-500/5', category: 'Home' },
+                  { view: 'mechanic', label: 'Mechanic Scout', icon: Wrench, color: 'text-red-600', bg: 'hover:bg-red-600/5', category: 'Tech' },
+                  { view: 'construction', label: 'Master Builder', icon: HardHat, color: 'text-orange-500', bg: 'hover:bg-orange-500/5', category: 'Home' },
+                  { view: 'offices', label: 'Office Productivity', icon: Briefcase, color: 'text-indigo-500', bg: 'hover:bg-indigo-500/5', category: 'Tech' },
+                  { view: 'video-games', label: 'Video Games Assistant', icon: Gamepad2, color: 'text-pink-600', bg: 'hover:bg-pink-600/5', category: 'Tech' },
+                  { view: 'toys', label: 'Toy Scout', icon: ToyBrick, color: 'text-yellow-500', bg: 'hover:bg-yellow-500/5', category: 'Shop' },
+                  { view: 'pharmacy', label: 'Pharmacy Scout', icon: Pill, color: 'text-emerald-500', bg: 'hover:bg-emerald-500/5', category: 'Shop' },
+                  { view: 'academic', label: 'Academic Master', icon: GraduationCap, color: 'text-blue-500', bg: 'hover:bg-blue-500/5', category: 'Tech' },
+                  { view: 'musical', label: 'Musical Scout', icon: Music, color: 'text-amber-500', bg: 'hover:bg-amber-500/5', category: 'Tech' },
+                  { view: 'electrician', label: 'Electrician Scout', icon: Zap, color: 'text-yellow-400', bg: 'hover:bg-yellow-400/5', category: 'Tech' },
+                  { view: 'housing', label: 'Housing Locator', icon: Building2, color: 'text-amber-600', bg: 'hover:bg-amber-600/5', category: 'Home' },
+                  { view: 'fuel', label: 'Fuel Scout', icon: Fuel, color: 'text-amber-500', bg: 'hover:bg-amber-500/5', category: 'Home' },
+                  { view: 'water', label: 'Water Guardian', icon: Droplets, color: 'text-blue-500', bg: 'hover:bg-blue-500/5', category: 'Home' },
+                  { view: 'gas', label: 'Gas Master', icon: Flame, color: 'text-orange-500', bg: 'hover:bg-orange-500/5', category: 'Home' },
+                ].filter(agent => agentFilter === 'All' || agent.category === agentFilter).map((agent: any) => (
                    <button
                       key={agent.view}
                       onClick={() => { setView(agent.view); setIsIAAgentsOpen(false); }}
@@ -2735,6 +3067,15 @@ const ComparisonResultView = ({
                       )}
                    </button>
                 ))}
+                
+                <div className="pt-2 mt-2 px-1">
+                   <button 
+                     onClick={() => setIsIAAgentsOpen(false)}
+                     className="w-full flex items-center justify-center gap-2 p-3 bg-neutral-100 dark:bg-neutral-800 rounded-xl text-neutral-500 hover:text-red-500 font-black uppercase text-[10px] tracking-widest transition-all border border-transparent hover:border-red-500/20"
+                   >
+                     <X size={14} /> Close Menu
+                   </button>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -2849,10 +3190,26 @@ const ComparisonResultView = ({
         <div className="w-full bg-neutral-900 border-t border-b border-emerald-green/10 py-2 overflow-hidden mb-8 shadow-2xl">
           <div className="flex gap-12 whitespace-nowrap animate-marquee">
             {Array.from({ length: 15 }).map((_, i) => (
-              <span key={i} className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-green/50 flex items-center gap-4">
-                <Zap size={10} className="text-emerald-green" /> GLOBAL SAVINGS GENERATED: <span className="text-white">${footerStats.savings.toLocaleString()}</span>
-                <span className="text-emerald-green/20">|</span>
-                COMMUNITY DEALS UNLOCKED: <span className="text-white">{footerStats.deals.toLocaleString()}</span>
+              <span key={i} className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4">
+                {i % 3 === 0 ? (
+                  <>
+                    <Zap size={10} className="text-emerald-green" /> 
+                    <span className="text-emerald-green">Win the afternoon with Versusfy</span>
+                    <span className="text-emerald-green/20">|</span>
+                  </>
+                ) : i % 3 === 1 ? (
+                  <>
+                    <Zap size={10} className="text-emerald-green" /> 
+                    <span className="text-apple-red">Mother's Day Special: Gifts & Deals</span>
+                    <span className="text-emerald-green/20">|</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap size={10} className="text-emerald-green" /> 
+                    GLOBAL SAVINGS: <span className="text-white">${footerStats.savings.toLocaleString()}</span>
+                    <span className="text-emerald-green/20">|</span>
+                  </>
+                )}
               </span>
             ))}
           </div>
@@ -2895,7 +3252,9 @@ const ComparisonResultView = ({
 
       <VisualSearch 
         isOpen={isVisualSearchOpen}
-        onClose={() => setIsVisualSearchOpen(false)}
+        onClose={() => { setIsVisualSearchOpen(false); setSelectedAgentMode(undefined); }}
+        initialAgentMode={selectedAgentMode}
+        initialQuery={(selectedAgentMode === 'energy' || selectedAgentMode === 'pharmacy') ? productB : undefined}
         onIdentified={(name) => {
           setProductB(name);
           setShowCaptcha(true); // Trigger comparison immediately after identification
@@ -2904,7 +3263,11 @@ const ComparisonResultView = ({
 
       <OmniAssistant 
         isOpen={isAssistantOpen}
-        onClose={() => setIsAssistantOpen(false)}
+        onClose={() => { setIsAssistantOpen(false); setAutoAssistantListen(false); setSelectedAgentMode(undefined); }}
+        userName={heroName}
+        onUserNameDetected={(name) => setHeroName(name)}
+        autoStartListening={autoAssistantListen}
+        agentMode={selectedAgentMode as any}
         onComparisonRequested={(a, b) => {
           setProductA(a);
           setProductB(b);
@@ -2918,7 +3281,10 @@ const ComparisonResultView = ({
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        onClick={() => setIsAssistantOpen(true)}
+        onClick={async () => {
+          await ensureAudioUnlocked().catch(() => {});
+          setIsAssistantOpen(true);
+        }}
         className="fixed bottom-24 right-4 sm:right-8 z-40 w-14 h-14 sm:w-16 sm:h-16 rounded-full shadow-[0_0_30px_rgba(16,185,129,0.3)] transition-all overflow-hidden border-4 border-white flex flex-col"
         title="Activate Omni-Assistant Magic"
       >

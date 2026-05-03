@@ -104,9 +104,10 @@ export const PersonalBuyer = () => {
         text: parsed.confirmationMessage,
         data: parsed.unsupportedStore ? null : parsed
       }]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("PersonalBuyer Error:", error);
-      setMessages(prev => [...prev, { role: 'assistant', text: "I'm sorry, I had a problem analyzing your desire. Could you repeat it? (Make sure GEMINI_API_KEY is set)" }]);
+      const msg = error?.message || "I had a problem analyzing your desire. Could you repeat it?";
+      setMessages(prev => [...prev, { role: 'assistant', text: msg }]);
     } finally {
       setLoading(false);
     }

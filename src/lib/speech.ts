@@ -3,59 +3,62 @@
  * Standardizes the voice of all AI Agents to match the Supreme Omni-Assistant.
  */
 
+import { speakText, AgentVoice, stopAllVoice } from '../services/voiceService';
+
 interface SpeakOptions {
-  pitch?: number;
-  rate?: number;
-  volume?: number;
+  voice?: AgentVoice;
   onStart?: () => void;
   onEnd?: () => void;
 }
 
-export const speak = (text: string, options: SpeakOptions = {}) => {
-  if (typeof window === 'undefined' || !window.speechSynthesis) return;
+export const speak = async (text: string, options: SpeakOptions = {}) => {
+  if (typeof window === 'undefined') return;
 
-  // Cancel any ongoing speech
-  window.speechSynthesis.cancel();
-
-  const utterance = new SpeechSynthesisUtterance(text);
+  if (options.onStart) options.onStart();
   
-  // Supreme Omni-Assistant Standard Configuration
-  // Tone: Soft, calm, 25yo female (American)
-  utterance.pitch = options.pitch ?? 1.05; 
-  utterance.rate = options.rate ?? 0.85;  
-  utterance.volume = options.volume ?? 1;
-
-  const voices = window.speechSynthesis.getVoices();
-  
-  // Prioritize known young American female voices
-  const femaleVoice = voices.find(v => 
-    (v.name.includes('Samantha') || 
-     v.name.includes('Victoria') || 
-     v.name.includes('Zira') || 
-     v.name.includes('Susan') || 
-     v.name.includes('Female') || 
-     v.name.includes('Google US English')) && 
-    (v.lang === 'en-US' || v.lang.startsWith('en-'))
-  ) || voices.find(v => (v.lang === 'en-US' || v.lang.startsWith('en-')) && !v.name.toLowerCase().includes('male')) || voices[0];
-
-  if (femaleVoice) {
-    utterance.voice = femaleVoice;
-    // Standardize language to ensure consistent accent
-    utterance.lang = femaleVoice.lang;
+  try {
+    await speakText(text, options.voice || 'Puck', options.onEnd);
+  } catch (error) {
+    console.error("Speech error, falling back to browser:", error);
+    // Standardize browser fallback
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      const isMale = ['Charon', 'Fenrir', 'Zephyr'].includes(options.voice || 'Puck');
+      
+      utterance.pitch = isMale ? 0.75 : 1.05;
+      utterance.rate = isMale ? 0.8 : 0.85;
+      
+      const voices = window.speechSynthesis.getVoices();
+      let bestVoice;
+      
+      if (isMale) {
+        bestVoice = voices.find(v => 
+          (v.name.includes('Male') || v.name.includes('Google UK English Male') || v.name.includes('Daniel')) && 
+          v.lang.startsWith('en-')
+        );
+      } else {
+        bestVoice = voices.find(v => 
+          (v.name.includes('Samantha') || v.name.includes('Victoria')) && 
+          v.lang.startsWith('en-')
+        );
+      }
+      
+      if (bestVoice) utterance.voice = bestVoice;
+      if (options.onEnd) {
+        utterance.onend = options.onEnd;
+        utterance.onerror = options.onEnd;
+      }
+      window.speechSynthesis.speak(utterance);
+    } else if (options.onEnd) {
+      options.onEnd();
+    }
   }
-
-  if (options.onStart) utterance.onstart = options.onStart;
-  if (options.onEnd) {
-    utterance.onend = options.onEnd;
-    utterance.onerror = options.onEnd;
-  }
-
-  window.speechSynthesis.speak(utterance);
 };
 
 export const stopSpeaking = () => {
-  if (typeof window !== 'undefined' && window.speechSynthesis) {
-    window.speechSynthesis.cancel();
+  if (typeof window !== 'undefined') {
+    stopAllVoice();
   }
 };
 

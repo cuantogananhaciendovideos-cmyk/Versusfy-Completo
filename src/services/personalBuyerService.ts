@@ -2,7 +2,7 @@ import { db } from "../lib/firebase";
 import { collection, addDoc, query, where, getDocs, orderBy, limit, doc, updateDoc, onSnapshot } from "firebase/firestore";
 
 async function callAiProxy(payload: any) {
-  const response = await fetch("/api/ai/generate", {
+  const response = await fetch("/api/ai/v2/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),

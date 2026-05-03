@@ -58,8 +58,8 @@ export const EventSuggestions = () => {
     setPersonalError(null);
     const result = await getEventSuggestions(personalEvent);
     
-    if (result && !Array.isArray(result) && result.error) {
-      setPersonalError(result.error);
+    if (result && !Array.isArray(result) && (result as any).error) {
+      setPersonalError((result as any).error);
       setPersonalRecs([]);
     } else {
       setPersonalRecs(Array.isArray(result) ? result : []);

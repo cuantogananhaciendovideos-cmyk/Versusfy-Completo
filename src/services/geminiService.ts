@@ -1,25 +1,12 @@
-import { db } from "../lib/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
 import { GoogleGenAI } from "@google/genai";
+import { db } from "../lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { safeJsonParse } from "../lib/jsonRepair";
 
-// Lazy initialization function to ensure runtimeConfig is ready
-let aiInstance: GoogleGenAI | null = null;
-function getAi() {
-  const apiKey = process.env.GEMINI_API_KEY;
-  
-  if (!apiKey || apiKey === "undefined") {
-    return null;
-  }
-  
-  if (!aiInstance) {
-    console.log("Versusfy: Engine initialized with key.");
-    aiInstance = new GoogleGenAI({ apiKey });
-  }
-  return aiInstance;
-}
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 /**
- * Unified generation helper that handles Proxy fallback
+ * Unified generation helper that handles direct SDK calls (Versusfy Tactical Engine)
  */
 export async function generateSmartContent(options: { 
   model: string, 
@@ -27,71 +14,42 @@ export async function generateSmartContent(options: {
   systemInstruction?: string,
   responseMimeType?: string 
 }) {
-  const ai = getAi();
-  
-  const payload = {
-    model: options.model,
-    contents: options.contents,
-    config: {
-      responseMimeType: options.responseMimeType || "application/json",
-      systemInstruction: options.systemInstruction
-    }
-  };
+  // Use gemini-3-flash-preview as the primary allowed model according to skill
+  const activeModel = options.model.includes("1.5-flash") ? "gemini-3-flash-preview" : 
+                     options.model.includes("3") ? options.model : "gemini-3-flash-preview";
 
-  if (!ai) {
-    // Attempt Proxy if local Key is not usable in browser (Railway logic)
-    try {
-      const response = await fetch("/api/ai/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        if (data.error?.includes("API key not valid")) {
-          throw new Error("ERROR DE LLAVE: La GEMINI_API_KEY en el servidor no es válida.");
-        }
-        throw new Error(data.error || "Proxy failed");
-      }
-      
-      return data.text;
-    } catch (e: any) {
-      if (e.message.includes("ERROR DE LLAVE")) throw e;
-      throw new Error(`AI Engine Error: ${e.message}. Ensure GEMINI_API_KEY is configured on the server.`);
-    }
-  }
-
-  const response = await callWithRetry(() => ai.models.generateContent({ 
-    model: options.model,
-    contents: options.contents,
-    config: {
-      responseMimeType: options.responseMimeType || "application/json",
-      systemInstruction: options.systemInstruction
-    }
-  }));
-  
-  return response.text;
-}
-
-/**
- * Exponential backoff helper for quota errors (429)
- */
-async function callWithRetry(fn: () => Promise<any>, retries = 3, delay = 2000, modelOverride?: string): Promise<any> {
   try {
-    return await fn();
+    console.log(`[GEMINI SERVICE] Generating content via SDK (Model: ${activeModel})`);
+    
+    // Format contents for SDK
+    // The SDK expects contents as a string or an array of Content objects
+    let formattedContents = options.contents;
+    if (typeof options.contents === 'string') {
+      formattedContents = options.contents;
+    } else if (Array.isArray(options.contents)) {
+      // If it's already formatted for SDK (parts array), keep it
+      formattedContents = options.contents;
+    } else if (options.contents.parts) {
+       formattedContents = [options.contents];
+    }
+
+    const response = await ai.models.generateContent({
+      model: activeModel,
+      contents: formattedContents,
+      config: {
+        responseMimeType: options.responseMimeType || "application/json",
+        systemInstruction: options.systemInstruction
+      }
+    });
+    
+    const text = response.text;
+    console.log(`[GEMINI SERVICE] Generated content successfully via SDK`);
+    return text;
   } catch (error: any) {
-    const errorStr = JSON.stringify(error);
-    const isQuotaError = error?.status === 429 || 
-                         errorStr.includes("429") || 
-                         errorStr.toLowerCase().includes("quota") ||
-                         errorStr.toLowerCase().includes("resource_exhausted");
-                         
-    if (isQuotaError && retries > 0) {
-      console.warn(`Versusfy: Quota exceeded. Retrying in ${delay/1000}s... (${retries} retries left)`);
-      await new Promise(res => setTimeout(res, delay + (Math.random() * 1000))); // Add jitter
-      return callWithRetry(fn, retries - 1, delay * 2, modelOverride);
+    console.error("[GEMINI SERVICE] SDK Call Failed:", error);
+    // Quota error handling (429)
+    if (error.message?.includes("429") || error.status === 429) {
+       throw new Error("LÍMITE DE GOOGLE: El cupo de esta API Key se ha agotado.");
     }
     throw error;
   }
@@ -180,19 +138,7 @@ export const compareProducts = async (productA: string, productB: string, locati
       }`
     });
     
-    const cleanText = (text || '{}').replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-    const result = JSON.parse(cleanText);
-
-    if (db && (typeof db.collection === 'function' || db.type)) {
-      try {
-        const docRef = doc(db, "comparisons", cacheKey);
-        await setDoc(docRef, result);
-      } catch (error) {
-        handleFirestoreError(error, OperationType.WRITE, "comparisons/" + cacheKey);
-      }
-    }
-    
-    return result;
+    return safeJsonParse(text || '{}', {});
   } catch (error: any) {
     if (JSON.stringify(error).includes("429")) {
       throw new Error("LÍMITE DE GOOGLE: El cupo de esta API Key se ha agotado.");
@@ -211,8 +157,7 @@ export const getSimilarProducts = async (product: string) => {
       systemInstruction: "You are a specialized product comparison assistant. Return ONLY a JSON array of 10 similar product names sorted A-Z."
     });
     
-    const cleanText = (text || '[]').replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-    return JSON.parse(cleanText);
+    return safeJsonParse(text || '[]', []);
   } catch (error) {
     console.error("Error in getSimilarProducts:", error);
     return [];
@@ -227,8 +172,7 @@ export const getEventSuggestions = async (event: string) => {
       systemInstruction: "You are a shopping expert specialized in events and products. Respond as a JSON array of items."
     });
     
-    const cleanText = (text || '[]').replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-    return JSON.parse(cleanText);
+    return safeJsonParse(text || '[]', []);
   } catch (error) {
     console.error("Error in getEventSuggestions:", error);
     return [];
@@ -243,9 +187,7 @@ export const identifyProduct = async (base64Content: string, mimeType: string) =
       systemInstruction: "Identify model/brand and return JSON: { \"productName\": \"...\" }"
     });
 
-    const cleanText = (text || '{}').replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-    const result = JSON.parse(cleanText);
-    return result.productName || null;
+    return (safeJsonParse(text || '{}', {}) as any).productName || null;
   } catch (error) {
     console.error("Error identifying product:", error);
     return null;
@@ -256,12 +198,11 @@ export const analyzePersonalStyle = async (base64Content: string, mimeType: stri
   try {
     const text = await generateSmartContent({
       model: "gemini-3-flash-preview",
-      contents: [{ parts: [{ text: "Analyze person in image" }, { inlineData: { data: base64Content, mimeType } }] }],
-      systemInstruction: "You are the Supreme Stylist. Analyze features and return style JSON object."
+      contents: [{ parts: [{ text: "Analyze person in image to provide a personal styling report." }, { inlineData: { data: base64Content, mimeType } }] }],
+      systemInstruction: "You are the Supreme Stylist. tactical fashion and beauty expert. Analyze the person's features (skin tone, hair color, eye color, current outfit) and return a detailed tactical styling report. Return ONLY valid JSON: { \"makeup\": { \"suggestion\": \"...\", \"products\": [\"Product 1\", \"Product 2\"] }, \"clothing\": { \"suggestion\": \"...\", \"products\": [\"Product 1\", \"Product 2\"] }, \"footwear\": { \"suggestion\": \"...\", \"products\": [\"Product 1\", \"Product 2\"] }, \"jewelry\": { \"suggestion\": \"...\", \"products\": [\"Product 1\", \"Product 2\"] }, \"verdict\": \"Final supreme tactical styling advice to be spoken by the agent\" }"
     });
 
-    const cleanText = (text || '{}').replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-    return JSON.parse(cleanText);
+    return safeJsonParse(text || '{}', null);
   } catch (error) {
     console.error("Error in analyzePersonalStyle:", error);
     return null;
@@ -272,12 +213,11 @@ export const analyzeSpaceContext = async (base64Content: string, mimeType: strin
   try {
     const text = await generateSmartContent({
       model: "gemini-3-flash-preview",
-      contents: [{ parts: [{ text: `Analyze space. Budget: ${budget}` }, { inlineData: { data: base64Content, mimeType } }] }],
-      systemInstruction: "You are the Space Architect. Analyze decoration and return JSON."
+      contents: [{ parts: [{ text: `Analyze space. Budget: ${budget || 'flexible'}` }, { inlineData: { data: base64Content, mimeType } }] }],
+      systemInstruction: "You are the Space Architect. Analyze decoration, furniture placement, and overall ambience. Return ONLY valid JSON: { \"type\": \"home|event\", \"paint_and_flooring\": { \"suggestion\": \"...\", \"products\": [\"P1\", \"P2\"] }, \"furniture_and_decor\": { \"suggestion\": \"...\", \"products\": [\"P1\", \"P2\"] }, \"lighting_and_ambience\": { \"suggestion\": \"...\", \"products\": [\"P1\", \"P2\"] }, \"verdict\": \"Final architectural tactical verdict to be spoken by the agent\" }"
     });
 
-    const cleanText = (text || '{}').replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-    return JSON.parse(cleanText);
+    return safeJsonParse(text || '{}', null);
   } catch (error) {
     console.error("Error in analyzeSpaceContext:", error);
     return null;
@@ -288,12 +228,11 @@ export const analyzeGardeningContext = async (base64Content: string, mimeType: s
   try {
     const text = await generateSmartContent({
       model: "gemini-3-flash-preview",
-      contents: [{ parts: [{ text: "Analyze terrain" }, { inlineData: { data: base64Content, mimeType } }] }],
-      systemInstruction: "You are the Gardening Expert. Analyze terrain/soil and return JSON."
+      contents: [{ parts: [{ text: "Analyze terrain and soil conditions." }, { inlineData: { data: base64Content, mimeType } }] }],
+      systemInstruction: "You are the Gardening Expert. Analyze terrain, soil state, and environmental factors. Return ONLY valid JSON: { \"soil_and_climate\": { \"suggestion\": \"...\", \"products\": [\"P1\", \"P2\"] }, \"plant_recommendations\": { \"suggestion\": \"...\", \"products\": [\"P1\", \"P2\"] }, \"tools_and_irrigation\": { \"suggestion\": \"...\", \"products\": [\"P1\", \"P2\"] }, \"verdict\": \"Final tactical landscape vision to be spoken by the agent\" }"
     });
 
-    const cleanText = (text || '{}').replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-    return JSON.parse(cleanText);
+    return safeJsonParse(text || '{}', null);
   } catch (error) {
     console.error("Error in analyzeGardeningContext:", error);
     return null;
@@ -304,12 +243,11 @@ export const analyzeMechanicContext = async (base64Content: string, mimeType: st
   try {
     const text = await generateSmartContent({
       model: "gemini-3-flash-preview",
-      contents: [{ parts: [{ text: "Analyze vehicle issue" }, { inlineData: { data: base64Content, mimeType } }] }],
-      systemInstruction: "You are the Mechanical Expert. Diagnose issue and return JSON."
+      contents: [{ parts: [{ text: "Diagnose vehicle issue or part condition." }, { inlineData: { data: base64Content, mimeType } }] }],
+      systemInstruction: "You are the Mechanical Expert. Diagnose vehicle problems and bodywork issues. Return ONLY valid JSON: { \"diagnosis\": { \"suggestion\": \"...\", \"products\": [\"Part 1\", \"Part 2\"] }, \"maintenance\": { \"suggestion\": \"...\", \"products\": [\"Fluid 1\", \"Fluid 2\"] }, \"bodywork\": { \"suggestion\": \"...\", \"products\": [\"Tool 1\", \"Tool 2\"] }, \"verdict\": \"Final tactical mechanical verdict to be spoken by the agent\" }"
     });
 
-    const cleanText = (text || '{}').replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-    return JSON.parse(cleanText);
+    return safeJsonParse(text || '{}', null);
   } catch (error) {
     console.error("Error in analyzeMechanicContext:", error);
     return null;
@@ -320,12 +258,11 @@ export const analyzeBuilderContext = async (base64Content: string, mimeType: str
   try {
     const text = await generateSmartContent({
       model: "gemini-3-flash-preview",
-      contents: [{ parts: [{ text: "Analyze construction" }, { inlineData: { data: base64Content, mimeType } }] }],
-      systemInstruction: "You are the Master Builder. Analyze structural phase and return JSON."
+      contents: [{ parts: [{ text: "Analyze construction phase or materials." }, { inlineData: { data: base64Content, mimeType } }] }],
+      systemInstruction: "You are the Master Builder. Analyze construction projects and materials. Return ONLY valid JSON: { \"structure\": { \"suggestion\": \"...\", \"products\": [\"P1\", \"P2\"] }, \"materials\": { \"suggestion\": \"...\", \"products\": [\"P1\", \"P2\"] }, \"power_tools\": { \"suggestion\": \"...\", \"products\": [\"P1\", \"P2\"] }, \"verdict\": \"Final architectural tactical verdict to be spoken by the agent\" }"
     });
 
-    const cleanText = (text || '{}').replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-    return JSON.parse(cleanText);
+    return safeJsonParse(text || '{}', null);
   } catch (error) {
     console.error("Error in analyzeBuilderContext:", error);
     return null;
@@ -336,12 +273,11 @@ export const analyzeOfficeContext = async (base64Content: string, mimeType: stri
   try {
     const text = await generateSmartContent({
       model: "gemini-3-flash-preview",
-      contents: [{ parts: [{ text: "Analyze office setup" }, { inlineData: { data: base64Content, mimeType } }] }],
-      systemInstruction: "You are the Productivity Architect. Suggest improvements and return JSON."
+      contents: [{ parts: [{ text: "Analyze office or workspace setup." }, { inlineData: { data: base64Content, mimeType } }] }],
+      systemInstruction: "You are the Productivity Architect. Analyze office ergonomics and setup. Return ONLY valid JSON: { \"ergonomics\": { \"suggestion\": \"...\", \"products\": [\"P1\", \"P2\"] }, \"efficiency\": { \"suggestion\": \"...\", \"products\": [\"P1\", \"P2\"] }, \"lighting\": { \"suggestion\": \"...\", \"products\": [\"P1\", \"P2\"] }, \"verdict\": \"Final productivity tactical verdict to be spoken by the agent\" }"
     });
 
-    const cleanText = (text || '{}').replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-    return JSON.parse(cleanText);
+    return safeJsonParse(text || '{}', null);
   } catch (error) {
     console.error("Error in analyzeOfficeContext:", error);
     return null;
@@ -356,26 +292,105 @@ export const analyzeRecipeBudget = async (recipe: string, ingredients: string, b
       systemInstruction: "You are the Budget Consultant. Analyze feasibility at Walmart USA and return JSON."
     });
 
-    const cleanText = (text || '{}').replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-    return JSON.parse(cleanText);
+    return safeJsonParse(text || '{}', null);
   } catch (error) {
     console.error("Error in analyzeRecipeBudget:", error);
     return null;
   }
 };
 
-export const chatWithOmniAssistant = async (query: string) => {
+export const analyzeEnergyBill = async (input: string | { base64: string, mimeType: string }) => {
   try {
+    const isImage = typeof input !== 'string';
+    const contentParts = isImage 
+      ? [{ text: "Analyze energy bill or receipt provided in the image. The user might speak Spanish, so provide the summary and suggestions in a way that respects their context if the bill is in Spanish." }, { inlineData: { data: input.base64, mimeType: input.mimeType } }]
+      : [{ text: `Analyze this energy saving request or appliance details: ${input}. Provide tactical suggestions.` }];
+
     const text = await generateSmartContent({
       model: "gemini-3-flash-preview",
-      contents: `User Query: ${query}`,
-      systemInstruction: "You are the Versusfy Supreme Omni-Assistant. You represent the Pulsating Sphere of Intelligence. Personality: Sweet, Soft, and Tactical. Return ONLY JSON structure: { \"response\": \"...\", \"action\": \"none|compare\", \"suggestions\": [] }"
+      contents: [{ parts: contentParts }],
+      systemInstruction: "You are the Energy Saving Intelligence. You are a tactical expert in utility cost reduction. Analyze the uploaded bill, receipt, appliance image, or text description. If it's a bill (recibo de luz/energía), identify the provider, billing period, total cost, and consumption (kWh). Provide 3 specific, high-impact tactical suggestions to reduce future costs. If it's an appliance, estimate its consumption and suggest more efficient replacements. IMPORTANT: If the input is in Spanish, provide the summary and suggestions in Spanish. Return ONLY valid JSON: { \"summary\": \"Precise analysis of what was detected\", \"totalCost\": \"Calculated or extracted cost\", \"kwhUsage\": \"Extracted consumption data\", \"tacticalSuggestions\": [{ \"title\": \"Tactical Move\", \"description\": \"Actionable steps\", \"potentialSavings\": \"Approximate dollar value saved\" }], \"verdict\": \"Final strategic advice spoken by the agent\" }"
     });
 
-    const cleanText = (text || '{}').replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-    return JSON.parse(cleanText);
+    return safeJsonParse(text || '{}', null);
+  } catch (error) {
+    console.error("Error in analyzeEnergyBill:", error);
+    return null;
+  }
+};
+
+export const analyzePharmacyBottle = async (input: string | { base64: string, mimeType: string }) => {
+  try {
+    const isImage = typeof input !== 'string';
+    const contentParts = isImage 
+      ? [{ text: "Analyze this medication bottle or packaging. Extract names, dosages, and compare prices at Walgreens, CVS, Walmart, and Amazon. Suggest generic alternatives if applicable." }, { inlineData: { data: input.base64, mimeType: input.mimeType } }]
+      : [{ text: `Analyze and compare prices for this medication: ${input}. Check Walgreens, CVS, Walmart, and Amazon.` }];
+
+    const text = await generateSmartContent({
+      model: "gemini-3-flash-preview",
+      contents: [{ parts: contentParts }],
+      systemInstruction: "You are the Pharmacy Scout. Tactical health intelligence expert. Analyze medications. Return ONLY valid JSON: { \"medicationName\": \"...\", \"activeIngredient\": \"...\", \"summary\": \"...\", \"prices\": [ { \"store\": \"Walgreens\", \"price\": \"$XX.XX\", \"available\": true }, { \"store\": \"CVS\", \"price\": \"$XX.XX\", \"available\": true }, { \"store\": \"Walmart\", \"price\": \"$XX.XX\", \"available\": true }, { \"store\": \"Amazon\", \"price\": \"$XX.XX\", \"available\": true } ], \"genericAlternative\": { \"name\": \"...\", \"priceRange\": \"...\" }, \"verdict\": \"Final tactical advice for the best purchase\" }"
+    });
+
+    return safeJsonParse(text || '{}', null);
+  } catch (error) {
+    console.error("Error in analyzePharmacyBottle:", error);
+    return null;
+  }
+};
+
+export const chatWithOmniAssistant = async (query: string, userName?: string, agentMode?: string, history: { role: 'user' | 'model', parts: { text: string }[] }[] = []) => {
+  try {
+    let modeInstruction = "";
+    if (agentMode === 'style') {
+      modeInstruction = "ACT AS: The Personal Style Scout. You are a high-end personal stylist. Use terms like 'darling', 'chic', 'tactical elegance'. Focus on beauty, fashion, manicure, and skin care.";
+    } else if (agentMode === 'pharmacy') {
+      modeInstruction = "ACT AS: The Pharmacy Scout. You are a healthcare price architect. Focus on medication costs, generic alternatives, and accessibility.";
+    } else if (agentMode === 'builder') {
+      modeInstruction = "ACT AS: The Master Builder. You are a seasoned construction foreman. Use rugged, professional terminology like 'on-site', 'blueprints', 'structural integrity', 'foundation'. You are direct and focused on building materials and power tools.";
+    } else if (agentMode === 'gardening') {
+      modeInstruction = "ACT AS: The Gardening Scout. You are a field botanical expert. Use terms like 'soil health', 'irrigation zones', 'seasonal yield', 'landscaping architecture'. You are practical and helpful regarding garden tools and plant health.";
+    }
+
+    const contents = [...history, { role: 'user', parts: [{ text: `User Query: ${query}. User Name: ${userName || 'unknown'}. Agent Mode: ${agentMode || 'omni'}.` }] }];
+
+    const text = await generateSmartContent({
+      model: "gemini-3-flash-preview",
+      contents: contents,
+      systemInstruction: `You are the Versusfy Supreme Omni-Assistant. You represent the Pulsating Sphere of Intelligence. 
+      ${modeInstruction}
+      PERSONALITY: Sweet, Soft, and Tactical. You are extremely polite and aim to provide a personal experience.
+      CONVERSATION MEMORY: You MUST remember the user name and the context of previous turns. If the user tells you their name, greet them by name in future responses.
+      CROSS-SELL: You know everything about the other Versusfy agents (Water Guardian, Gas Master, Fuel Scout, Housing Search, Marketing Maestro). 
+      Suggest them moderately when the user conversation expands. 
+      If the user name is 'unknown', ask for it politely.
+      Return ONLY JSON structure: { \"response\": \"...\", \"action\": \"none|compare\", \"suggestions\": [], \"spokenResponse\": \"Personalized speech string\", \"comparisonEntityA\": \"Optional Product A\", \"comparisonEntityB\": \"Optional Product B\", \"detectedUserName\": \"Optional Name if user just revealed it\" }`
+    });
+
+    return safeJsonParse(text || '{}', { 
+      response: "Encountered a tactical error, dear. I am still here to help you though.", 
+      action: "none", 
+      suggestions: [],
+      spokenResponse: "I am sorry, dear, but I hit a small tactical bump. How else can I assist your savings journey today?",
+      comparisonEntityA: "",
+      comparisonEntityB: "",
+      detectedUserName: ""
+    }) as { 
+      response: string; 
+      action: string; 
+      suggestions: string[]; 
+      spokenResponse: string; 
+      comparisonEntityA?: string; 
+      comparisonEntityB?: string;
+      detectedUserName?: string;
+    };
   } catch (error) {
     console.error("Error in chatWithOmniAssistant:", error);
-    return { response: "Encountered a tactical error, dear.", action: "none", suggestions: [] };
+    return { 
+      response: "Encountered a tactical error, dear. I am still here to help you though.", 
+      action: "none", 
+      suggestions: [],
+      spokenResponse: "I am sorry, dear, but I hit a small tactical bump. How else can I assist your savings journey today?"
+    };
   }
 };

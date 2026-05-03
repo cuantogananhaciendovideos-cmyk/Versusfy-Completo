@@ -1,6 +1,8 @@
-
-console.log("--- ENV PROBE ---");
-const keys = Object.keys(process.env).filter(k => k.includes('FIREBASE') || k.includes('GEMINI'));
-console.log("Found keys:", keys);
-keys.forEach(k => console.log(`${k}: ${process.env[k]?.substring(0, 5)}...`));
-console.log("--- END PROBE ---");
+import fs from 'fs';
+const keys = Object.keys(process.env);
+const report = keys.map(k => {
+  const v = process.env[k] || '';
+  return `${k}: len=${v.length}, prefix=${v.substring(0, 5)}...`;
+}).join('\n');
+fs.writeFileSync('detailed_env.log', report);
+console.log('Detailed env report written to detailed_env.log');

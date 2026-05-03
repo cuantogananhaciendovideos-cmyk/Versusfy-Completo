@@ -4,7 +4,7 @@ import { collection, query, where, getDocs, addDoc, updateDoc, doc, increment, o
 // We now call the server-side proxy instead of the SDK directly in the browser
 // to keep the API key secure and avoid initialization errors.
 async function callAiProxy(payload: any) {
-  const response = await fetch("/api/ai/generate", {
+  const response = await fetch("/api/ai/v2/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -39,6 +39,7 @@ const PHRASES_COLLECTION = "marketing_phrases";
 const TESTIMONIALS_COLLECTION = "testimonials";
 
 const DEFAULT_BANNER_PHRASES = [
+  "Win the afternoon with Versusfy",
   "Exclusive Deals & Coupons Just For You",
   "Unlock Best Online Discounts Now",
   "Save Big with Pro Promo Codes",
@@ -59,7 +60,7 @@ const HOLIDAYS = [
   { name: "St. Patricks Day", month: 2, day: 17, greeting: "Happy St. Patrick's Day! Lucky Deals Await", preGreeting: "Get Lucky! St. Paddy's deals are approaching" },
   { name: "Children's Day", month: 3, day: 30, greeting: "Happy Children's Day! Toy & Game Specials", preGreeting: "Children's Day is coming! Special surprises inside" },
   { name: "Easter", month: 3, day: 20, greeting: "Happy Easter! Spring Savings Inside", preGreeting: "Easter is near! Hop into these sweet deals" },
-  { name: "Mother's Day", month: 4, day: 11, greeting: "Happy Mother's Day! Perfect Gifts for Her", preGreeting: "Mother's Day is near! Best gifts for Mom in our shops" },
+  { name: "Mother's Day", month: 4, day: 10, greeting: "Happy Mother's Day! Perfect Gifts for Her", preGreeting: "Mother's Day is near! Best gifts for Mom in our shops" },
   { name: "Memorial Day", month: 4, day: 26, greeting: "Memorial Day: Honor & Save Today", preGreeting: "Memorial Day Sales start soon! Gear up for Summer" },
   { name: "Juneteenth", month: 5, day: 19, greeting: "Happy Juneteenth! Celebrating Community", preGreeting: "Juneteenth is near! Support local & Save" },
   { name: "Father's Day", month: 5, day: 15, greeting: "Happy Father's Day! Best Tech Deals for Him", preGreeting: "Father's Day is coming! Tech deals for Dad ready" },
@@ -107,7 +108,7 @@ export const generateDailyPhrases = async () => {
       const upcomingHoliday = HOLIDAYS.find(h => {
         const hDate = new Date(todayDate.getFullYear(), h.month, h.day);
         const diffDays = Math.ceil((hDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
-        return diffDays > 0 && diffDays <= 7;
+        return diffDays > 0 && diffDays <= 15;
       });
 
       const prompt = `Generate 3 short, punchy persuasive marketing phrases (max 6 words) for a product comparison site called Versusfy. 
@@ -228,7 +229,7 @@ export const getCurrentBannerPhrase = async (): Promise<MarketingPhrase | null> 
   const upcomingHoliday = HOLIDAYS.find(h => {
     const hDate = new Date(now.getFullYear(), h.month, h.day);
     const diffDays = Math.ceil((hDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    return diffDays > 0 && diffDays <= 7;
+    return diffDays > 0 && diffDays <= 15;
   });
 
   if (upcomingHoliday) {

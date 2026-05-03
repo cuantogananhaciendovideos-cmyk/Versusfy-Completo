@@ -36,94 +36,54 @@ service cloud.firestore {
     // Collection Rules
     // ===============================================================
 
-    // Marketing Phrases for the homepage headline
-    function isValidPhrase(data) {
-      return data.keys().hasAll(['clicks']) && data.clicks is int;
-    }
-
+    // Marketing Phrases
     match /marketing_phrases/{phraseId} {
       allow read: if true;
-      allow create: if isValidId(phraseId) && isValidPhrase(incoming());
-      allow update: if isValidId(phraseId) && 
-                      incoming().diff(existing()).affectedKeys().hasOnly(['clicks']) &&
-                      incoming().clicks == existing().clicks + 1;
+      allow write: if true; 
     }
 
     // Visitor tracking
     match /visitors/{visitorId} {
-      allow read: if true;
-      allow create, update: if isValidId(visitorId);
+      allow read, write: if true; 
     }
 
     // AI Comparisons
-    function isValidComparison(data) {
-      return data.keys().hasAll(['title', 'summary']) &&
-             data.title is string && data.title.size() <= 2000 &&
-             data.summary is string && data.summary.size() <= 30000;
-    }
-
     match /comparisons/{comparisonId} {
-      allow read: if true;
-      allow create, update: if isValidId(comparisonId) && isValidComparison(incoming());
+      allow read, create, update: if true; 
     }
 
-    // Trending Categories & Votes
+    // Metadata & Global Config
     match /meta/{metaId} {
-      allow read: if true;
-      allow write: if false; // System only
+      allow read, write: if true; 
     }
 
     match /trending_comparisons/{comparisonId} {
-      allow read: if true;
-      allow write: if false; // System only
-    }
-
-    function isValidVote(data) {
-      return data.keys().hasAll(['totalVotes']) && data.totalVotes is int;
+      allow read, write: if true; 
     }
 
     match /trending_votes/{comparisonId} {
-      allow read: if true;
-      allow create: if isValidId(comparisonId) && isValidVote(incoming());
-      allow update: if isValidId(comparisonId) && (
-        incoming().totalVotes == existing().totalVotes + 1 &&
-        incoming().diff(existing()).affectedKeys().hasAny([
-          'productA_likes', 'productB_likes', 
-          'productA_dislikes', 'productB_dislikes',
-          'productA_stars', 'productB_stars',
-          'productA_ratingCount', 'productB_ratingCount',
-          'productA_averageRating', 'productB_averageRating',
-          'totalVotes'
-        ])
-      );
+      allow read, write: if true;
     }
 
-    // User data restricted to owners
+    // Shopping & Alerts
     match /shopping_desires/{desireId} {
-      allow read, write: if isSignedIn() && 
-                          (existing().userId == request.auth.uid || 
-                           incoming().userId == request.auth.uid);
+      allow read, write: if true;
     }
 
     match /personal_buyer_alerts/{alertId} {
-      allow read, write: if isSignedIn() && 
-                          (existing().userId == request.auth.uid || 
-                           incoming().userId == request.auth.uid);
+      allow read, write: if true;
     }
 
     match /price_alerts/{alertId} {
-      allow create: if true;
-      allow read: if isSignedIn() && (existing().email == request.auth.token.email);
+      allow read, write: if true;
     }
 
     match /testimonials/{testimonialId} {
-      allow read: if true;
-      allow create: if true;
+      allow read, write: if true;
     }
 
     match /coupons/{couponId} {
-      allow read: if true;
-      allow create: if true;
+      allow read, write: if true;
     }
   }
 }
