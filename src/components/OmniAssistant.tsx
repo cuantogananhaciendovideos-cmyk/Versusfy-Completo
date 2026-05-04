@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Mic, Send, X, Volume2, VolumeX, Loader2, Wand2, HardHat, Sprout } from 'lucide-react';
+import { Mic, Send, X, Volume2, VolumeX, Loader2, Wand2, HardHat, Sprout, Wrench } from 'lucide-react';
 import { chatWithOmniAssistant } from '../services/geminiService';
 
 import { speak as omniSpeak, stopSpeaking as omniStop } from '../lib/speech';
@@ -90,13 +90,17 @@ export const OmniAssistant: React.FC<OmniAssistantProps> = ({ isOpen, onClose, o
         initialGreeting = userName
           ? `Welcome back to the field, ${userName}. Gardening Scout here. How is the terrain looking today?`
           : "Gardening Scout reporting for duty. I can analyze your soil, plants, and irrigation. What's your name, fellow grower?";
+      } else if (agentMode === 'mechanic') {
+        initialGreeting = userName
+          ? `Status check, ${userName}. Mechanical Scout here. What's the diagnostic on the vehicle today?`
+          : "Mechanical Scout active. I can analyze engine parts, performance specs, and drivetrain issues. Give me a name to log this session.";
       } else {
         initialGreeting = userName 
           ? `Hello, ${userName}. How can I assist you today, dear?` 
           : "How can I assist you today, dear? By the way, how shall I address you?";
       }
       
-      speak(initialGreeting, { voice: agentMode === 'builder' ? 'Charon' : agentMode === 'gardening' ? 'Zephyr' : 'Puck' });
+      speak(initialGreeting, { voice: (agentMode === 'builder' || agentMode === 'mechanic') ? 'Charon' : agentMode === 'gardening' ? 'Zephyr' : 'Puck' });
     } else {
       stopSpeaking();
     }
@@ -104,7 +108,7 @@ export const OmniAssistant: React.FC<OmniAssistantProps> = ({ isOpen, onClose, o
 
   const speak = (text: string, options: { voice?: any } = {}) => {
     omniSpeak(text, {
-      voice: options.voice || (agentMode === 'builder' ? 'Charon' : agentMode === 'gardening' ? 'Zephyr' : 'Puck'),
+      voice: options.voice || ((agentMode === 'builder' || agentMode === 'mechanic') ? 'Charon' : agentMode === 'gardening' ? 'Zephyr' : 'Puck'),
       onStart: () => setIsSpeaking(true),
       onEnd: () => setIsSpeaking(false),
     });
@@ -137,7 +141,7 @@ export const OmniAssistant: React.FC<OmniAssistantProps> = ({ isOpen, onClose, o
       const result = await chatWithOmniAssistant(currentQuery, userName || undefined, agentMode, history);
       setResponse(result.response);
       setSuggestions(result.suggestions || []);
-      speak(result.spokenResponse || result.response, { voice: agentMode === 'builder' ? 'Charon' : agentMode === 'gardening' ? 'Zephyr' : 'Puck' });
+      speak(result.spokenResponse || result.response, { voice: (agentMode === 'builder' || agentMode === 'mechanic') ? 'Charon' : agentMode === 'gardening' ? 'Zephyr' : 'Puck' });
 
       // Update history
       setHistory(prev => [
@@ -185,12 +189,12 @@ export const OmniAssistant: React.FC<OmniAssistantProps> = ({ isOpen, onClose, o
             </button>
 
             {/* Pulsating Sphere Header */}
-            <div className={`p-8 flex flex-col items-center gap-6 bg-gradient-to-b ${agentMode === 'style' ? 'from-pink-500/10' : agentMode === 'builder' ? 'from-orange-500/10' : agentMode === 'gardening' ? 'from-emerald-green/10' : 'from-emerald-green/10'} to-transparent`}>
+            <div className={`p-8 flex flex-col items-center gap-6 bg-gradient-to-b ${agentMode === 'style' ? 'from-pink-500/10' : agentMode === 'builder' ? 'from-orange-500/10' : agentMode === 'mechanic' ? 'from-red-600/10' : agentMode === 'gardening' ? 'from-emerald-green/10' : 'from-emerald-green/10'} to-transparent`}>
               <div className="relative w-32 h-32">
                 {/* The Sphere with dynamic color based on mode */}
                 <div className="w-full h-full rounded-full flex flex-col overflow-hidden border-2 border-white/10 shadow-2xl relative">
                   {/* Top Layer */}
-                  <div className={`flex-1 ${agentMode === 'style' ? 'bg-pink-500' : agentMode === 'builder' ? 'bg-orange-500' : agentMode === 'gardening' ? 'bg-emerald-green' : 'bg-emerald-green'} relative overflow-hidden`}>
+                  <div className={`flex-1 ${agentMode === 'style' ? 'bg-pink-500' : agentMode === 'builder' ? 'bg-orange-500' : agentMode === 'mechanic' ? 'bg-red-600' : agentMode === 'gardening' ? 'bg-emerald-green' : 'bg-emerald-green'} relative overflow-hidden`}>
                     <div className="absolute inset-0 bg-white/10 blur-xl" />
                   </div>
                   
@@ -199,22 +203,23 @@ export const OmniAssistant: React.FC<OmniAssistantProps> = ({ isOpen, onClose, o
                     {agentMode === 'style' && <Wand2 className="text-pink-500 absolute animate-pulse" size={24} />}
                     {agentMode === 'builder' && <HardHat className="text-orange-500 absolute animate-pulse" size={24} />}
                     {agentMode === 'gardening' && <Sprout className="text-emerald-green absolute animate-pulse" size={24} />}
+                    {agentMode === 'mechanic' && <Wrench className="text-red-600 absolute animate-pulse" size={24} />}
                     <div className="bg-black/10 rounded-full h-1/2 w-1/2" />
                     <div className="absolute inset-0 bg-white shadow-[0_0_15px_rgba(255,255,255,0.8)] mix-blend-overlay" />
                   </div>
 
                   {/* Bottom: Apple Red / Neutral */}
-                  <div className={`flex-1 ${agentMode === 'style' ? 'bg-purple-600' : agentMode === 'builder' ? 'bg-neutral-700' : 'bg-[#ff0800]'} relative overflow-hidden`}>
+                  <div className={`flex-1 ${agentMode === 'style' ? 'bg-purple-600' : agentMode === 'builder' ? 'bg-neutral-700' : agentMode === 'mechanic' ? 'bg-black' : 'bg-[#ff0800]'} relative overflow-hidden`}>
                     <div className="absolute inset-0 bg-white/5 blur-xl" />
                   </div>
                 </div>
                 
                 {/* Glow effects */}
-                <div className={`absolute -top-4 left-1/2 -translate-x-1/2 w-4 ${agentMode === 'style' ? 'bg-pink-500/40' : agentMode === 'builder' ? 'bg-orange-500/40' : 'bg-emerald-green/40'} h-4 blur-xl rounded-full`} />
-                <div className={`absolute -bottom-4 left-1/2 -translate-x-1/2 w-4 ${agentMode === 'style' ? 'bg-purple-500/40' : agentMode === 'builder' ? 'bg-neutral-500/40' : 'bg-apple-red/40'} h-4 blur-xl rounded-full`} />
+                <div className={`absolute -top-4 left-1/2 -translate-x-1/2 w-4 ${agentMode === 'style' ? 'bg-pink-500/40' : agentMode === 'builder' ? 'bg-orange-500/40' : agentMode === 'mechanic' ? 'bg-red-600/40' : 'bg-emerald-green/40'} h-4 blur-xl rounded-full`} />
+                <div className={`absolute -bottom-4 left-1/2 -translate-x-1/2 w-4 ${agentMode === 'style' ? 'bg-purple-500/40' : agentMode === 'builder' ? 'bg-neutral-500/40' : agentMode === 'mechanic' ? 'bg-black/40' : 'bg-apple-red/40'} h-4 blur-xl rounded-full`} />
               </div>
 
-              <h2 className={`text-xl font-bold tracking-tight text-center uppercase tracking-[0.2em] ${agentMode === 'style' ? 'text-pink-500' : agentMode === 'builder' ? 'text-orange-500' : agentMode === 'gardening' ? 'text-emerald-green' : 'text-white'}`}>
+              <h2 className={`text-xl font-bold tracking-tight text-center uppercase tracking-[0.2em] ${agentMode === 'style' ? 'text-pink-500' : agentMode === 'builder' ? 'text-orange-500' : agentMode === 'mechanic' ? 'text-red-600' : agentMode === 'gardening' ? 'text-emerald-green' : 'text-white'}`}>
                 {agentMode === 'style' ? 'Personal Style Scout' : 
                  agentMode === 'mechanic' ? 'Mechanical Scout' : 
                  agentMode === 'pharmacy' ? 'Pharmacy Scout' : 
@@ -233,10 +238,10 @@ export const OmniAssistant: React.FC<OmniAssistantProps> = ({ isOpen, onClose, o
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-white/5 border border-white/10 p-4 rounded-2xl text-neutral-300 leading-relaxed italic"
                   >
-                    <p className={`text-sm font-medium mb-2 flex items-center gap-2 ${agentMode === 'style' ? 'text-pink-500' : agentMode === 'builder' ? 'text-orange-500' : agentMode === 'gardening' ? 'text-emerald-green' : 'text-emerald-green'}`}>
+                    <p className={`text-sm font-medium mb-2 flex items-center gap-2 ${agentMode === 'style' ? 'text-pink-500' : agentMode === 'builder' ? 'text-orange-500' : agentMode === 'mechanic' ? 'text-red-600' : agentMode === 'gardening' ? 'text-emerald-green' : 'text-emerald-green'}`}>
                       <button 
                         onClick={() => speak(response)}
-                        className={`p-1 rounded-full transition-colors flex items-center gap-2 ${agentMode === 'style' ? 'hover:bg-pink-500/10' : agentMode === 'builder' ? 'hover:bg-orange-500/10' : agentMode === 'gardening' ? 'hover:bg-emerald-green/10' : 'hover:bg-emerald-green/10'}`}
+                        className={`p-1 rounded-full transition-colors flex items-center gap-2 ${agentMode === 'style' ? 'hover:bg-pink-500/10' : agentMode === 'builder' ? 'hover:bg-orange-500/10' : agentMode === 'mechanic' ? 'hover:bg-red-600/10' : agentMode === 'gardening' ? 'hover:bg-emerald-green/10' : 'hover:bg-emerald-green/10'}`}
                         title="Read message"
                       >
                         <Volume2 size={14} className={isSpeaking ? 'text-white' : ''} />
@@ -257,7 +262,7 @@ export const OmniAssistant: React.FC<OmniAssistantProps> = ({ isOpen, onClose, o
               
               {loading && (
                 <div className="flex justify-center p-4">
-                  <Loader2 className={`animate-spin ${agentMode === 'builder' ? 'text-orange-500' : 'text-emerald-green'}`} size={24} />
+                  <Loader2 className={`animate-spin ${(agentMode === 'builder' || agentMode === 'mechanic') ? 'text-orange-500' : 'text-emerald-green'}`} size={24} />
                 </div>
               )}
 
@@ -288,15 +293,15 @@ export const OmniAssistant: React.FC<OmniAssistantProps> = ({ isOpen, onClose, o
                 </button>
                 <input
                   type="text"
-                  placeholder={agentMode === 'style' ? "How can I elevate your look, darling?" : agentMode === 'builder' ? "What's the project status, boss?" : agentMode === 'gardening' ? "How is the soil looking, fellow grower?" : "How can I assist you today, dear?"}
+                  placeholder={agentMode === 'style' ? "How can I elevate your look, darling?" : (agentMode === 'builder' || agentMode === 'mechanic') ? "What's the status boss?" : agentMode === 'gardening' ? "How is the soil looking, fellow grower?" : "How can I assist you today, dear?"}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className={`flex-grow bg-neutral-800 p-4 rounded-xl text-white placeholder:text-neutral-500 outline-none transition focus:ring-2 ${agentMode === 'style' ? 'focus:ring-pink-500' : agentMode === 'builder' ? 'focus:ring-orange-500' : agentMode === 'gardening' ? 'focus:ring-emerald-green' : 'focus:ring-emerald-green'}`}
+                  className={`flex-grow bg-neutral-800 p-4 rounded-xl text-white placeholder:text-neutral-500 outline-none transition focus:ring-2 ${agentMode === 'style' ? 'focus:ring-pink-500' : agentMode === 'builder' ? 'focus:ring-orange-500' : agentMode === 'mechanic' ? 'focus:ring-red-600' : agentMode === 'gardening' ? 'focus:ring-emerald-green' : 'focus:ring-emerald-green'}`}
                 />
                 <button
                   type="submit"
                   disabled={!query.trim() || loading}
-                  className={`p-4 text-white rounded-xl transition disabled:opacity-50 ${agentMode === 'style' ? 'bg-pink-500 hover:bg-pink-600' : agentMode === 'builder' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-emerald-green hover:bg-emerald-600'}`}
+                  className={`p-4 text-white rounded-xl transition disabled:opacity-50 ${agentMode === 'style' ? 'bg-pink-500 hover:bg-pink-600' : agentMode === 'builder' ? 'bg-orange-500 hover:bg-orange-600' : agentMode === 'mechanic' ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-green hover:bg-emerald-600'}`}
                 >
                   <Send size={20} />
                 </button>
@@ -305,14 +310,6 @@ export const OmniAssistant: React.FC<OmniAssistantProps> = ({ isOpen, onClose, o
                 Voice Commands & Text-to-Speech Active
               </p>
             </div>
-
-            {/* Close Button */}
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 p-2 text-neutral-500 hover:text-white transition"
-            >
-              <X size={24} />
-            </button>
           </motion.div>
         </motion.div>
       )}

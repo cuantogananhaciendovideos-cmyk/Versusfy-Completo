@@ -1,9 +1,6 @@
-import { GoogleGenAI } from "@google/genai";
-
 export type AgentVoice = 'Puck' | 'Charon' | 'Kore' | 'Fenrir' | 'Aoide' | 'Zephyr';
 
 let currentAudioContext: AudioContext | null = null;
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Standard Gemini voices: Aoide, Charon, Fenrir, Kore, Puck, Zephyr
 const VALID_GEMINI_VOICES = ['Aoide', 'Charon', 'Fenrir', 'Kore', 'Puck', 'Zephyr'];
@@ -82,7 +79,7 @@ export async function speakText(text: string, voice: AgentVoice = 'Puck', onEnd?
   const audioContext = await ensureAudioUnlocked();
 
   try {
-    console.log(`[VOICE SERVICE] Requesting audio for voice: ${voice} via SDK`);
+    console.log(`[VOICE SERVICE] Requesting audio for voice: ${voice} via Proxy`);
     
     // Add persona instructions for the TTS model if it's a specialized voice
     let processedText = text;
@@ -94,25 +91,33 @@ export async function speakText(text: string, voice: AgentVoice = 'Puck', onEnd?
       processedText = `Say with a gravelly, seasoned construction worker voice: ${text}`;
     }
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-tts-preview",
-      contents: [{ parts: [{ text: processedText }] }],
-      config: {
-        responseModalities: ["AUDIO"],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { 
+    const response = await fetch('/api/ai/v2/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: "gemini-3.1-flash-tts-preview",
+        contents: [{ parts: [{ text: processedText }] }],
+        config: {
+          responseModalities: ["AUDIO"],
+          speechConfig: {
+            voiceConfig: {
               voiceName: VALID_GEMINI_VOICES.includes(voice) ? voice : 'Aoide'
-            },
-          },
-        },
-      },
+            }
+          }
+        }
+      })
     });
 
-    const base64Audio = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+    if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Proxy Voice Error ${response.status}: ${errText}`);
+    }
+
+    const data = await response.json();
+    const base64Audio = data.audio;
 
     if (base64Audio) {
-      console.log(`[VOICE SERVICE] Received audio via SDK`);
+      console.log(`[VOICE SERVICE] Received audio via Proxy`);
       
       // Conversion from base64 to ArrayBuffer
       const byteCharacters = atob(base64Audio);

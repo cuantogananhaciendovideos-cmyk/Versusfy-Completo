@@ -1,12 +1,9 @@
-import { GoogleGenAI } from "@google/genai";
 import { db } from "../lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { safeJsonParse } from "../lib/jsonRepair";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
 /**
- * Unified generation helper that handles direct SDK calls (Versusfy Tactical Engine)
+ * Unified generation helper that handles proxy calls to the backend (Versusfy Tactical Engine)
  */
 export async function generateSmartContent(options: { 
   model: string, 
@@ -14,41 +11,33 @@ export async function generateSmartContent(options: {
   systemInstruction?: string,
   responseMimeType?: string 
 }) {
-  // Use gemini-3-flash-preview as the primary allowed model according to skill
-  const activeModel = options.model.includes("1.5-flash") ? "gemini-3-flash-preview" : 
-                     options.model.includes("3") ? options.model : "gemini-3-flash-preview";
-
   try {
-    console.log(`[GEMINI SERVICE] Generating content via SDK (Model: ${activeModel})`);
+    console.log(`[GEMINI SERVICE] Requesting content via Proxy (Model: ${options.model})`);
     
-    // Format contents for SDK
-    // The SDK expects contents as a string or an array of Content objects
-    let formattedContents = options.contents;
-    if (typeof options.contents === 'string') {
-      formattedContents = options.contents;
-    } else if (Array.isArray(options.contents)) {
-      // If it's already formatted for SDK (parts array), keep it
-      formattedContents = options.contents;
-    } else if (options.contents.parts) {
-       formattedContents = [options.contents];
+    const response = await fetch('/api/ai/v2/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: options.model,
+        contents: options.contents,
+        config: {
+          responseMimeType: options.responseMimeType || "application/json",
+          systemInstruction: options.systemInstruction
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`API Error ${response.status}: ${errText}`);
     }
 
-    const response = await ai.models.generateContent({
-      model: activeModel,
-      contents: formattedContents,
-      config: {
-        responseMimeType: options.responseMimeType || "application/json",
-        systemInstruction: options.systemInstruction
-      }
-    });
-    
-    const text = response.text;
-    console.log(`[GEMINI SERVICE] Generated content successfully via SDK`);
-    return text;
+    const data = await response.json();
+    console.log(`[GEMINI SERVICE] Proxy call successful`);
+    return data.text;
   } catch (error: any) {
-    console.error("[GEMINI SERVICE] SDK Call Failed:", error);
-    // Quota error handling (429)
-    if (error.message?.includes("429") || error.status === 429) {
+    console.error("[GEMINI SERVICE] Proxy Call Failed:", error);
+    if (error.message?.includes("429")) {
        throw new Error("LÍMITE DE GOOGLE: El cupo de esta API Key se ha agotado.");
     }
     throw error;
@@ -350,6 +339,8 @@ export const chatWithOmniAssistant = async (query: string, userName?: string, ag
       modeInstruction = "ACT AS: The Master Builder. You are a seasoned construction foreman. Use rugged, professional terminology like 'on-site', 'blueprints', 'structural integrity', 'foundation'. You are direct and focused on building materials and power tools.";
     } else if (agentMode === 'gardening') {
       modeInstruction = "ACT AS: The Gardening Scout. You are a field botanical expert. Use terms like 'soil health', 'irrigation zones', 'seasonal yield', 'landscaping architecture'. You are practical and helpful regarding garden tools and plant health.";
+    } else if (agentMode === 'mechanic') {
+      modeInstruction = "ACT AS: The Mechanical Scout. You are a high-performance automotive engineer. Use technical terms like 'torque', 'fuel-to-air ratio', 'transmission diagnostics', 'drivetrain'. You are technical, precise, and authoritative about vehicle parts and tools.";
     }
 
     const contents = [...history, { role: 'user', parts: [{ text: `User Query: ${query}. User Name: ${userName || 'unknown'}. Agent Mode: ${agentMode || 'omni'}.` }] }];
