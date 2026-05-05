@@ -26,7 +26,7 @@ export const GasMaster: React.FC<GasMasterProps> = ({ onClose, userName }) => {
 
   const startListening = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert("Tu navegador no soporta reconocimiento de voz.");
+      console.warn("Speech recognition not supported in this browser.");
       return;
     }
 
@@ -88,17 +88,36 @@ export const GasMaster: React.FC<GasMasterProps> = ({ onClose, userName }) => {
     reader.readAsDataURL(file);
 
     setLoading(true);
+    
+    // Immediate verbal feedback
     try {
-      const result = await analyzeGasBill(file, userName || undefined);
-      setAdvice(result);
-      const tips = await getQuickGasAdvice();
-      setQuickTips(tips);
-      
-      speak(result.spokenResponse, { 
+      speak(`Tactical sensors online. Analyzing gas consumption for ${userName || 'User'}. Tracking thermal efficiency anomalies now.`, {
         voice: 'Charon',
         onStart: () => setIsSpeaking(true),
         onEnd: () => setIsSpeaking(false)
       });
+    } catch (e) {
+      console.warn("Speech failed but continuing analysis", e);
+    }
+
+    try {
+      // Parallelize heavy operations
+      const [result, tips] = await Promise.all([
+        analyzeGasBill(file, userName || undefined),
+        getQuickGasAdvice().catch(() => ["Use pot lids", "Match pot size to burner", "Optimize burner air-flow"])
+      ]);
+      
+      setAdvice(result);
+      setQuickTips(tips);
+      
+      // Speak the actual results once found
+      if (result.spokenResponse) {
+        speak(result.spokenResponse, { 
+          voice: 'Charon',
+          onStart: () => setIsSpeaking(true),
+          onEnd: () => setIsSpeaking(false)
+        });
+      }
     } catch (error) {
       console.error("Gas analysis failed", error);
     } finally {

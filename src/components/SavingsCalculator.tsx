@@ -1,6 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Calculator, X, MapPin, TrendingUp, Coins, DollarSign, Globe, Award, Share2 } from 'lucide-react';
+import { 
+  Calculator, X, MapPin, TrendingUp, Coins, DollarSign, 
+  Globe, Award, Share2, Download, MessageCircle, Twitter, Facebook,
+  Zap, Droplets, Flame, ShoppingCart, Calendar, ArrowRightLeft
+} from 'lucide-react';
+
+interface SavingsChannel {
+  id: string;
+  name: string;
+  icon: React.ReactNode;
+  defaultSavingRate: number;
+  color: string;
+}
+
+const TACTICAL_CHANNELS: SavingsChannel[] = [
+  { id: 'fuel', name: 'Fuel Scout', icon: <Zap size={14} />, defaultSavingRate: 0.18, color: '#fbbf24' },
+  { id: 'water', name: 'Water Guardian', icon: <Droplets size={14} />, defaultSavingRate: 0.25, color: '#60a5fa' },
+  { id: 'gas', name: 'Gas Master', icon: <Flame size={14} />, defaultSavingRate: 0.15, color: '#f87171' },
+  { id: 'grocery', name: 'Personal Buyer', icon: <ShoppingCart size={14} />, defaultSavingRate: 0.22, color: '#34d399' },
+];
 
 interface SavingsCalculatorProps {
   isOpen: boolean;
@@ -15,8 +34,8 @@ export const SavingsCalculator: React.FC<SavingsCalculatorProps> = ({
   detectedCity,
   onUpdateHeroSavings
 }) => {
-  const [dailySpending, setDailySpending] = useState<string>('');
-  const [weeklySpending, setWeeklySpending] = useState<string>('');
+  const [spending, setSpending] = useState<string>('');
+  const [activeChannels, setActiveChannels] = useState<string[]>(['fuel', 'grocery']);
   const [regionData, setRegionData] = useState({
     country: '...',
     state: '...',
@@ -25,22 +44,20 @@ export const SavingsCalculator: React.FC<SavingsCalculatorProps> = ({
   });
   const [calculatedSavings, setCalculatedSavings] = useState<number | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [viewMode, setViewMode] = useState<'annual' | 'breakdown'>('annual');
 
   useEffect(() => {
     if (isOpen) {
-      // Simulate real-time IP/Location data fetching
       const detectLocation = async () => {
         try {
-          // In a real app, we'd use an IP geolocation API here
-          // For now, we simulate the 'real-time' fetch feeling
           setTimeout(() => {
             setRegionData({
               country: 'United States',
-              state: 'California',
-              city: detectedCity || 'Los Angeles',
-              averagePriceIndex: 0.85 + (Math.random() * 0.3) // Simulated regional index
+              state: 'Tactical region',
+              city: detectedCity || 'USA City',
+              averagePriceIndex: 0.9 + (Math.random() * 0.2)
             });
-          }, 1500);
+          }, 800);
         } catch (e) {
           console.error("Location detection error", e);
         }
@@ -49,153 +66,256 @@ export const SavingsCalculator: React.FC<SavingsCalculatorProps> = ({
     }
   }, [isOpen, detectedCity]);
 
+  const stats = useMemo(() => {
+    if (!calculatedSavings) return null;
+    return {
+      day: calculatedSavings / 365,
+      week: calculatedSavings / 52,
+      month: calculatedSavings / 12,
+      year: calculatedSavings
+    };
+  }, [calculatedSavings]);
+
+  const toggleChannel = (id: string) => {
+    setActiveChannels(prev => 
+      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+    );
+  };
+
   const handleCalculate = () => {
     setIsCalculating(true);
+    setCalculatedSavings(null);
+
     setTimeout(() => {
-      const daily = parseFloat(dailySpending) || 0;
-      const weekly = parseFloat(weeklySpending) || (daily * 7);
+      const baseValue = parseFloat(spending) || 0;
+      if (baseValue <= 0) {
+        setIsCalculating(false);
+        return;
+      }
       
-      // Calculation logic: Versusfy helps save approx 22% based on regional optimization
-      const annualSpending = weekly * 52;
-      const savings = annualSpending * (0.22 * regionData.averagePriceIndex);
+      const totalSavingRate = activeChannels.reduce((acc, channelId) => {
+        const channel = TACTICAL_CHANNELS.find(c => c.id === channelId);
+        return acc + (channel?.defaultSavingRate || 0);
+      }, 0) / (activeChannels.length || 1);
+
+      // Final Annual Simulation
+      const annualSpending = baseValue * 52; 
+      const savings = annualSpending * totalSavingRate * regionData.averagePriceIndex;
       
       setCalculatedSavings(savings);
       setIsCalculating(false);
-    }, 2000);
+      setViewMode('breakdown');
+    }, 1500);
   };
 
-  const handleAddToHero = () => {
-    if (calculatedSavings) {
-      onUpdateHeroSavings(calculatedSavings);
-      onClose();
-    }
+  const shareText = `Tactical update: I just identified an estimated $${calculatedSavings?.toFixed(2)} in annual savings using Versusfy! Efficiency maximized. #Versusfy #SavingsHero`;
+
+  const handleDownload = () => {
+    const data = {
+      user: "Versusfy Hero",
+      city: regionData.city,
+      savings: stats,
+      timestamp: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `versusfy-savings-report.json`;
+    a.click();
   };
 
   if (!isOpen) return null;
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
         <motion.div 
-          initial={{ scale: 0.9, y: 50, opacity: 0 }}
+          initial={{ scale: 0.8, y: 100, opacity: 0 }}
           animate={{ scale: 1, y: 0, opacity: 1 }}
-          exit={{ scale: 0.9, y: 50, opacity: 0 }}
-          className="relative w-full max-w-md p-1 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(255,215,0,0.3)]"
+          exit={{ scale: 0.8, y: 100, opacity: 0 }}
+          className="relative w-full max-w-xl p-1 rounded-[32px] overflow-hidden shadow-[0_0_60px_rgba(0,206,209,0.2)]"
           style={{
-            background: 'linear-gradient(135deg, #FFD700 0%, #B8860B 50%, #FFD700 100%)', // Pure Gold Cover
+            background: 'linear-gradient(135deg, #FFD700 0%, #B8860B 50%, #FFD700 100%)',
           }}
         >
-          {/* Inner Content Case */}
-          <div className="bg-neutral-900 rounded-[22px] p-6 text-white min-h-[500px] flex flex-col">
+          <div className="bg-neutral-950 rounded-[28px] p-6 text-white min-h-[600px] flex flex-col relative">
             <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-2">
-                <Calculator className="text-[#FFD700] w-6 h-6" />
-                <h2 className="text-xl font-black italic tracking-tighter uppercase text-[#FFD700]">Savings Calculator</h2>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-500/10 rounded-xl border border-amber-500/20">
+                  <Calculator className="text-amber-500 w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black italic tracking-tighter uppercase text-amber-500">Savings Matrix</h2>
+                  <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest flex items-center gap-1">
+                    <MapPin size={10} /> {regionData.city} | Regional Index: {regionData.averagePriceIndex.toFixed(3)}
+                  </p>
+                </div>
               </div>
-              <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition text-[#FFD700]">
+              <button onClick={onClose} className="p-2 hover:bg-neutral-800 rounded-full transition text-neutral-500 hover:text-white">
                 <X />
               </button>
             </div>
 
-            {/* LED Display Region */}
-            <div className="bg-black p-4 rounded-xl mb-6 shadow-inner border-2 border-[#B8860B]/50 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-[#FF0000]/5 pointer-events-none group-active:bg-[#FF0000]/10 transition-colors" />
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center justify-between text-[10px] uppercase font-mono text-neutral-500 mb-1">
-                  <span className="flex items-center gap-1"><MapPin size={10} /> Real-Time Regional Feed</span>
-                  <span className="animate-pulse flex items-center gap-1 text-red-500"><Globe size={10} /> Live Data</span>
-                </div>
-                <div className="flex flex-wrap gap-2 text-[12px] font-mono mb-2 border-b border-neutral-800 pb-2">
-                  <span className="text-[#FFD700]">C: {regionData.country}</span>
-                  <span className="text-[#FFD700]">S: {regionData.state}</span>
-                  <span className="text-[#FFD700]">Loc: {regionData.city}</span>
-                </div>
-                <div className="h-20 flex items-center justify-center relative">
-                  <p className="text-4xl font-mono font-bold tracking-widest text-[#FF3131] drop-shadow-[0_0_8px_rgba(255,49,49,0.8)]">
-                    {isCalculating ? (
-                      <span className="animate-pulse">CALCULATING...</span>
-                    ) : calculatedSavings !== null ? (
-                      `$${calculatedSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                    ) : (
-                      '000,000.00'
-                    )}
-                  </p>
-                  <span className="absolute bottom-0 right-0 text-[10px] text-red-900 font-mono italic">ESTIMATED ANNUAL SAVINGS</span>
-                </div>
+            {/* Display Component */}
+            <div className="bg-black/80 rounded-2xl p-6 mb-8 border border-neutral-800 relative group overflow-hidden">
+              <div className="absolute top-2 right-4 flex gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               </div>
+              
+              <div className="flex flex-col items-center justify-center py-4">
+                <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-[0.3em] mb-2">Annual Potential Recovery</span>
+                <AnimatePresence mode="wait">
+                  <motion.p 
+                    key={calculatedSavings || 'none'}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-5xl font-black italic text-emerald-500 tracking-tighter drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                  >
+                    {isCalculating ? 'AUDITING...' : calculatedSavings ? `$${calculatedSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '$0.00'}
+                  </motion.p>
+                </AnimatePresence>
+              </div>
+
+              {stats && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="grid grid-cols-4 gap-2 mt-6 pt-6 border-t border-neutral-800"
+                >
+                  {[
+                    { label: 'Day', val: stats.day },
+                    { label: 'Week', val: stats.week },
+                    { label: 'Month', val: stats.month },
+                    { label: 'Year', val: stats.year }
+                  ].map((item) => (
+                    <div key={item.label} className="text-center">
+                      <p className="text-[10px] font-black italic text-emerald-500 tracking-tighter">${item.val.toFixed(2)}</p>
+                      <p className="text-[8px] text-neutral-600 font-bold uppercase">{item.label}</p>
+                    </div>
+                  ))}
+                </motion.div>
+              )}
             </div>
 
-            {/* Input Form */}
-            <div className="flex-1 space-y-4">
+            <div className="flex-1 space-y-6 overflow-y-auto pr-2 custom-scrollbar">
+              {/* Input Area */}
               <div>
-                <label className="block text-xs uppercase font-bold text-neutral-500 mb-2 px-1">Daily Average Spending ($)</label>
-                <div className="relative">
+                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest block mb-3 px-1">Weekly Household Spending ($)</label>
+                <div className="relative group">
                   <input 
                     type="number" 
-                    value={dailySpending}
-                    onChange={(e) => setDailySpending(e.target.value)}
-                    placeholder="25.00"
-                    className="w-full bg-neutral-800 border-b-2 border-[#1DE9B6] p-3 rounded-t-lg outline-none text-white focus:bg-neutral-700 transition"
+                    value={spending}
+                    onChange={(e) => setSpending(e.target.value)}
+                    placeholder="250.00"
+                    className="w-full bg-neutral-900 border-2 border-neutral-800 focus:border-amber-500/50 p-4 rounded-xl outline-none text-white font-bold transition-all"
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1DE9B6]/50"><DollarSign size={16} /></div>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-700 group-focus-within:text-amber-500 transition-colors">
+                    <DollarSign size={20} />
+                  </div>
                 </div>
               </div>
 
+              {/* TACTICAL CHANNELS */}
               <div>
-                <label className="block text-xs uppercase font-bold text-neutral-500 mb-2 px-1">Weekly Average Spending ($)</label>
-                <div className="relative">
-                  <input 
-                    type="number" 
-                    value={weeklySpending}
-                    onChange={(e) => setWeeklySpending(e.target.value)}
-                    placeholder="175.00"
-                    className="w-full bg-neutral-800 border-b-2 border-[#1DE9B6] p-3 rounded-t-lg outline-none text-white focus:bg-neutral-700 transition"
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1DE9B6]/50"><Coins size={16} /></div>
+                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest block mb-4 px-1">Active Optimization Channels</label>
+                <div className="grid grid-cols-2 gap-3">
+                   {TACTICAL_CHANNELS.map(channel => (
+                     <button
+                        key={channel.id}
+                        onClick={() => toggleChannel(channel.id)}
+                        className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                          activeChannels.includes(channel.id) 
+                            ? 'bg-neutral-800 border-neutral-600' 
+                            : 'bg-transparent border-neutral-900 opacity-40 hover:opacity-100'
+                        }`}
+                     >
+                        <div 
+                          className="p-2 rounded-lg"
+                          style={{ backgroundColor: `${channel.color}20`, color: channel.color }}
+                        >
+                          {channel.icon}
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-tight">{channel.name}</span>
+                        {activeChannels.includes(channel.id) && (
+                          <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        )}
+                     </button>
+                   ))}
                 </div>
-                <p className="text-[10px] text-neutral-500 mt-2 italic px-1">*Enter one or both to calculate your potential savings map.</p>
               </div>
+
+              {/* SOCIAL HUB */}
+              {calculatedSavings && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-neutral-900/50 border border-neutral-800 p-4 rounded-2xl"
+                >
+                  <h4 className="text-[9px] font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Share2 size={12} className="text-amber-500" /> Operation Share: Influence the Community
+                  </h4>
+                  <div className="grid grid-cols-4 gap-2">
+                    <a 
+                      href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
+                      className="p-3 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white rounded-xl flex items-center justify-center transition"
+                      target="_blank" rel="noreferrer"
+                    >
+                      <MessageCircle size={18} />
+                    </a>
+                    <a 
+                      href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`}
+                      className="p-3 bg-blue-500/10 hover:bg-blue-500 text-blue-500 hover:text-white rounded-xl flex items-center justify-center transition"
+                      target="_blank" rel="noreferrer"
+                    >
+                      <Twitter size={18} />
+                    </a>
+                    <a 
+                      href={`https://facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
+                      className="p-3 bg-sky-600/10 hover:bg-sky-600 text-sky-600 hover:text-white rounded-xl flex items-center justify-center transition"
+                      target="_blank" rel="noreferrer"
+                    >
+                      <Facebook size={18} />
+                    </a>
+                    <button 
+                      onClick={handleDownload}
+                      className="p-3 bg-amber-500/10 hover:bg-amber-500 text-amber-500 hover:text-white rounded-xl flex items-center justify-center transition"
+                    >
+                      <Download size={18} />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
             </div>
 
-            {/* Diamond Turquoise Buttons */}
+            {/* ACTION BUTTONS */}
             <div className="mt-8 grid grid-cols-1 gap-3">
               <button 
                 onClick={handleCalculate}
-                disabled={isCalculating || (!dailySpending && !weeklySpending)}
-                className="group relative h-14 w-full rounded-xl overflow-hidden shadow-lg transition-transform active:scale-95 disabled:opacity-50 disabled:grayscale"
+                disabled={isCalculating || !spending}
+                className="group relative h-14 w-full rounded-2xl overflow-hidden shadow-xl active:scale-[0.98] transition-transform disabled:opacity-50"
               >
                 <div className="absolute inset-0 bg-[#00CED1] opacity-90 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-black/20" />
-                {/* Diamond/Crystal Texture Overlay */}
-                <div 
-                  className="absolute inset-0 opacity-20"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 0L20 10L10 20L0 10Z' fill='%23fff'/%3E%3C/svg%3E")`,
-                    backgroundSize: '15px 15px'
+                <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-black/20" />
+                <span className="relative z-10 font-black uppercase tracking-[0.2em] text-[#004D4D] flex items-center justify-center gap-2">
+                  {isCalculating ? <ArrowRightLeft className="animate-spin" /> : <Calculator size={20} />}
+                  {isCalculating ? 'Auditing Markets...' : 'Execute Calculation'}
+                </span>
+              </button>
+
+              {calculatedSavings && (
+                <button 
+                  onClick={() => {
+                    onUpdateHeroSavings(calculatedSavings);
+                    onClose();
                   }}
-                />
-                <span className="relative z-10 font-black uppercase tracking-widest text-[#004D4D] flex items-center justify-center gap-2">
-                  {isCalculating ? <TrendingUp className="animate-bounce" /> : <Calculator />}
-                  {isCalculating ? 'Processing...' : 'Run Audit'}
-                </span>
-              </button>
-
-              <button 
-                onClick={handleAddToHero}
-                disabled={calculatedSavings === null || isCalculating}
-                className="group relative h-12 w-full rounded-xl overflow-hidden shadow-md transition-all active:scale-95 border-2 border-[#00CED1]/30 hover:border-[#00CED1] disabled:opacity-40"
-              >
-                <div className="absolute inset-0 bg-[#00CED1]/10 group-hover:bg-[#00CED1]/20 transition-colors" />
-                <span className="relative z-10 font-bold uppercase tracking-tight text-[#00CED1] text-xs flex items-center justify-center gap-2">
-                  <Award size={14} /> Add to Community Hero Stats
-                </span>
-              </button>
-            </div>
-
-            <div className="mt-6 text-center">
-              <p className="text-[9px] text-neutral-600 font-mono">
-                SECURE HASH: {Math.random().toString(16).slice(2, 10).toUpperCase()} | VERIFIED REGIONAL INDEX: {regionData.averagePriceIndex.toFixed(4)}
-              </p>
+                  className="flex items-center justify-center gap-2 text-[10px] font-black text-amber-500 uppercase tracking-widest hover:text-white transition py-2"
+                >
+                  <Award size={14} /> Submit Findings to Community Feed
+                </button>
+              )}
             </div>
           </div>
         </motion.div>

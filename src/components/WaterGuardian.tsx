@@ -27,17 +27,36 @@ export const WaterGuardian: React.FC<WaterGuardianProps> = ({ onClose, userName 
     reader.readAsDataURL(file);
 
     setLoading(true);
+    
+    // Immediate verbal feedback
     try {
-      const result = await analyzeWaterBill(file, userName || undefined);
-      setAdvice(result);
-      const tips = await getQuickWaterAdvice();
-      setQuickTips(tips);
-      
-      speak(result.spokenResponse, { 
+      speak(`Tactical reception initiated. Analyzing water consumption patterns for ${userName || 'User'}. Scanning for countermeasures.`, {
         voice: 'Kore',
         onStart: () => setIsSpeaking(true),
         onEnd: () => setIsSpeaking(false)
       });
+    } catch (e) {
+      console.warn("Initial speech failed", e);
+    }
+
+    try {
+      // Parallelize heavy operations
+      const [result, tips] = await Promise.all([
+        analyzeWaterBill(file, userName || undefined),
+        getQuickWaterAdvice().catch(() => ["Check for leaks", "Install aerators"])
+      ]);
+      
+      setAdvice(result);
+      setQuickTips(tips);
+      
+      // Speak the actual results found in the bill
+      if (result.spokenResponse) {
+        speak(result.spokenResponse, { 
+          voice: 'Kore',
+          onStart: () => setIsSpeaking(true),
+          onEnd: () => setIsSpeaking(false)
+        });
+      }
     } catch (error) {
       console.error("Analysis failed", error);
     } finally {

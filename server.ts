@@ -64,7 +64,7 @@ async function startServer() {
     
     try {
       const genAI = new GoogleGenerativeAI(key);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: 'v1beta' });
+      const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" }, { apiVersion: 'v1beta' });
       const response = await model.generateContent("Hello, are you alive?");
       res.json({ success: true, text: response.response.text() });
     } catch (e: any) {
@@ -107,99 +107,117 @@ async function startServer() {
 
     let lastError: any = null;
 
+    // MODELS TO TRY FOR THIS KEY (v14.0 - Specialized TTS Priority)
+    const isAudioReq = config?.responseModalities?.includes('audio') || 
+                       config?.responseModalities?.includes('AUDIO') || 
+                       (Array.isArray(config?.responseModalities) && config.responseModalities.some((m: any) => String(m).toLowerCase() === 'audio'));
+
     for (const keyObj of validKeys) {
       const apiKey = keyObj.key!;
       const sourceName = keyObj.name;
-
-      // MODELS TO TRY FOR THIS KEY (v14.0 - Specialized TTS Priority)
-      const isAudioReq = config?.responseModalities?.includes('audio') || 
-                         config?.responseModalities?.includes('AUDIO') || 
-                         (Array.isArray(config?.responseModalities) && config.responseModalities.some((m: any) => String(m).toLowerCase() === 'audio'));
       
       const modelsToTry = isAudioReq 
-        ? ["gemini-3.1-flash-tts-preview", "gemini-2.5-flash-preview-tts", "gemini-flash-latest", "gemini-pro-latest"] 
-        : ["gemini-2.0-flash", "gemini-flash-latest", "gemini-2.5-flash", "gemini-pro-latest"];
+        ? ["gemini-3.1-flash-tts-preview", "gemini-flash-latest"] 
+        : ["gemini-3-flash-preview", "gemini-3.1-pro-preview", "gemini-flash-latest"];
 
+      let skipToNextKey = false;
       for (const modelToUse of modelsToTry) {
-        try {
-          // API Versions to try. Audio modalities are strictly v1beta.
-          const versions = isAudioReq ? ['v1beta'] : ['v1beta', 'v1'];
-          let finalData: any = null;
-          let success = false;
-          let lastTrialError: any = null;
+        if (skipToNextKey) break;
+        
+        let retryCount = 0;
+        const maxRetries = 1; // Faster fallback
+        
+        while (retryCount <= maxRetries) {
+          try {
+            // Priority: v1beta for features, v1 for stability discovery
+            const versions = isAudioReq ? ['v1beta'] : ['v1beta', 'v1'];
+            let finalData: any = null;
+            let success = false;
+            let lastTrialError: any = null;
+            for (const apiVersion of versions) {
+              try {
+                const url = `https://generativelanguage.googleapis.com/${apiVersion}/models/${modelToUse}:generateContent?key=${apiKey}`;
 
-          for (const apiVersion of versions) {
-            try {
-              const url = `https://generativelanguage.googleapis.com/${apiVersion}/models/${modelToUse}:generateContent?key=${apiKey}`;
-
-              // Determine casing based on version
-              // v1 usually expects camelCase, v1beta prefers snake_case for REST
-              const isV1 = apiVersion === 'v1';
-
-              const generationConfig: any = {
-                temperature: 0.7,
-                [isV1 ? 'topP' : 'top_p']: 0.95,
-                [isV1 ? 'topK' : 'top_k']: 40,
-                [isV1 ? 'maxOutputTokens' : 'max_output_tokens']: 2048,
-              };
-
-              if (isAudioReq) {
-                // v1beta JSON REST standard compatibility
-                generationConfig.response_modalities = ["AUDIO"];
+                // Determine casing based on version
+                const isV1 = apiVersion === 'v1';
                 
-                generationConfig.speech_config = {
-                  voice_config: { 
-                    prebuilt_voice_config: { 
-                      voice_name: (config?.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName || 'Aoide') 
-                    } 
-                  }
+                // Construct parameters
+                const temperature = config?.temperature || 0.7;
+                const topP = config?.topP || 0.95;
+                const topK = config?.topK || 40;
+                const maxTokens = config?.maxOutputTokens || 1024; // Smaller for speed
+
+                const generationConfig: any = {
+                  temperature,
+                  [isV1 ? 'topP' : 'top_p']: topP,
+                  [isV1 ? 'topK' : 'top_k']: topK,
+                  [isV1 ? 'maxOutputTokens' : 'max_output_tokens']: maxTokens,
                 };
-              } else if (config?.responseMimeType) {
-                generationConfig[isV1 ? 'responseMimeType' : 'response_mime_type'] = config.responseMimeType;
-              }
 
-              const formattedContents = Array.isArray(contents) ? contents.map((c: any) => {
-                if (typeof c === 'string') return { role: 'user', parts: [{ text: c }] };
-                if (c.parts && !c.role) return { role: 'user', parts: c.parts };
-                return c;
-              }) : (typeof contents === 'string' ? [{ role: 'user', parts: [{ text: contents }] }] : 
-                   (contents?.parts && !contents?.role ? [{ role: 'user', parts: contents.parts }] : [contents]));
+                if (isAudioReq) {
+                  generationConfig.response_modalities = ["AUDIO"];
+                  generationConfig.speech_config = {
+                    voice_config: { 
+                      prebuilt_voice_config: { 
+                        voice_name: (config?.speechConfig?.voiceConfig?.prebuiltVoiceConfig?.voiceName || 'Aoide') 
+                      } 
+                    }
+                  };
+                } else if (config?.responseMimeType) {
+                  generationConfig[isV1 ? 'responseMimeType' : 'response_mime_type'] = config.responseMimeType;
+                }
 
-              const body: any = {
-                contents: formattedContents,
-                generationConfig,
-              };
+                const formattedContents = Array.isArray(contents) ? contents.map((c: any) => {
+                  if (typeof c === 'string') return { role: 'user', parts: [{ text: c }] };
+                  if (c.parts && !c.role) return { role: 'user', parts: c.parts };
+                  return c;
+                }) : (typeof contents === 'string' ? [{ role: 'user', parts: [{ text: contents }] }] : 
+                     (contents?.parts && !contents?.role ? [{ role: 'user', parts: contents.parts }] : [contents]));
 
-              if (config?.systemInstruction) {
-                body[isV1 ? 'systemInstruction' : 'system_instruction'] = { parts: [{ text: config.systemInstruction }] };
-              }
+                const body: any = {
+                  contents: formattedContents,
+                  generationConfig,
+                };
 
-              const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-              });
+                if (config?.systemInstruction) {
+                  body[isV1 ? 'systemInstruction' : 'system_instruction'] = { parts: [{ text: config.systemInstruction }] };
+                }
 
-              const responseText = await response.text();
-              if (!response.ok) {
-                // Silently skip expected version incompatibilities
-                if (response.status === 404 || response.status === 400) {
+                const response = await fetch(url, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(body)
+                });
+
+                if (!response.ok) {
+                  const errStatus = response.status;
+                  // If quota or auth, skip this key entirely
+                  if (errStatus === 429 || errStatus === 403) {
+                     skipToNextKey = true;
+                     break;
+                  }
+                  continue; 
+                }
+
+                const responseText = await response.text();
+                finalData = JSON.parse(responseText);
+                
+                if (finalData.error) {
+                   if (finalData.error.code === 429) { skipToNextKey = true; break; }
                    continue;
                 }
-                throw new Error(`HTTP ${response.status} (${apiVersion}): ${responseText}`);
+
+                success = true;
+                break; 
+              } catch (trialErr: any) {
+                continue;
               }
-
-              finalData = JSON.parse(responseText);
-              success = true;
-              break; // Success, exit versions loop
-            } catch (err: any) {
-              lastTrialError = err;
-              if (err.message.includes('404') || err.message.includes('400')) continue; 
-              throw err; 
             }
-          }
 
-          if (!success) throw lastTrialError || new Error("All API versions failed for this model");
+          if (skipToNextKey) break;
+          if (!success) throw new Error(`Model ${modelToUse} failed version check`);
+
+
 
           const resText = finalData.candidates?.[0]?.content?.parts?.find((p: any) => p.text)?.text || "";
           const result: any = {
@@ -224,32 +242,72 @@ async function startServer() {
             console.log(`[AI PROXY V2] SUCCESS: Audio captured (${result.audio ? result.audio.length : 0} bytes, type: ${result.audioMimeType}, prefix: ${prefix}) using ${modelToUse}`);
           }
           
-          if (isAudioReq && !result.audio) {
-            console.warn(`[AI PROXY V2] Model ${modelToUse} returned success but no audio data. Next...`);
+            if (isAudioReq && !result.audio) {
+              console.warn(`[AI PROXY V2] Model ${modelToUse} returned success but no audio data. Next...`);
+              continue;
+            }
+
+            console.log(`[AI PROXY V2] FINAL SUCCESS: ${sourceName} | Model: ${modelToUse}${retryCount > 0 ? ` (after ${retryCount} retries)` : ''}`);
+            return res.json(result);
+
+          } catch (error: any) {
+          lastError = error;
+          const msg = error.message || String(error);
+          
+          // Retry on transient errors (500, 503)
+          if ((msg.includes('500') || msg.includes('503')) && retryCount < maxRetries) {
+            retryCount++;
+            const backoff = 500 * Math.pow(2, retryCount) + (Math.random() * 500);
+            console.warn(`[AI PROXY V2] Transient error (HTTP 500/503) on ${modelToUse}. Retrying ${retryCount}/${maxRetries} after ${Math.round(backoff)}ms...`);
+            await new Promise(resolve => setTimeout(resolve, backoff));
             continue;
           }
 
-          console.log(`[AI PROXY V2] FINAL SUCCESS: ${sourceName} | Model: ${modelToUse}`);
-          return res.json(result);
-
-        } catch (error: any) {
-          lastError = error;
-          const msg = error.message || String(error);
           console.warn(`[AI PROXY V2] Sub-trial failed: ${sourceName} | Model: ${modelToUse} | Error: ${msg.substring(0, 150)}`);
           
           if (msg.includes('404') || msg.includes('not found') || msg.includes('501') || (msg.includes('400') && msg.includes('modality'))) {
-             continue; 
+             break; // Next model
           }
           
           if (msg.includes('429') || msg.includes('403') || msg.includes('permission')) {
-             break; 
+             skipToNextKey = true;
+             break; // Next key
           }
+          
+          break; // Next model for other errors
         }
-      }
-    }
+      } // End of retry loop
+    } // End of model loop
+
+    } // End of key loop
 
     // Final failure
     const finalMsg = lastError?.message || String(lastError);
+    
+    // TACTICAL FALLBACK: If audio failed, try one last text-only request to ensure a response
+    if (isAudioReq) {
+        console.warn(`[AI PROXY] Audio failed for all keys. Attempting emergency text-only fallback...`);
+        try {
+            const fallbackBody = {
+               contents: Array.isArray(contents) ? contents : [{ role: 'user', parts: [{ text: typeof contents === 'string' ? contents : JSON.stringify(contents) }] }],
+               generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
+            };
+            const fallbackRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${validKeys[0].key}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(fallbackBody)
+            });
+            if (fallbackRes.ok) {
+                const fallbackData = await fallbackRes.json();
+                const fallbackText = fallbackData.candidates?.[0]?.content?.parts?.[0]?.text || "I'm sorry, my voice systems are under high demand. Looking at the data...";
+                console.log(`[AI PROXY] Emergency text fallback successful.`);
+                return res.json({ text: fallbackText, modelUsed: "gemini-3-flash-preview", source: validKeys[0].name, isFallback: true });
+            }
+        } catch (fallbackErr) {
+            console.error(`[AI PROXY] Emergency fallback also failed.`);
+        }
+    }
+
     console.error(`[AI PROXY] All keys failed. Last error: ${finalMsg}`);
     res.status(lastError?.status || 500).json({ 
       error: "AI_PROXY_TOTAL_FAILURE", 
@@ -448,7 +506,7 @@ async function startServer() {
       messagingSenderId: getVal('FIREBASE_MESSAGING_SENDER_ID'),
       appId: getVal('FIREBASE_APP_ID'),
       measurementId: getVal('FIREBASE_MEASUREMENT_ID'),
-      databaseId: getVal('FIREBASE_DATABASE_ID') || (localFirebaseConfig as any).firestoreDatabaseId || '(default)',
+      databaseId: getVal('FIREBASE_DATABASE_ID') || (localFirebaseConfig as any).firestoreDatabaseId || 'ai-studio-f0c1260c-872e-4bbe-ba1c-fdb9dc1d1205',
       geminiApiKey: process.env.GEMINI_API_KEY ? 'HIDDEN_PRESENT' : 'MISSING',
       gmailStatus: (process.env.GMAIL_USER || process.env.SMTP_USER) ? 'READY' : 'MISSING',
       detectedKeys: Object.keys(process.env).filter(k => k.includes('FIREBASE') || k.includes('GMAIL') || k.includes('SMTP')),

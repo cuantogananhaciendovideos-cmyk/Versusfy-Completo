@@ -43,7 +43,9 @@ export const analyzeWaterBill = async (imageFile: File, userName?: string): Prom
       model: "gemini-3-flash-preview",
       contents: prompt,
       systemInstruction: `You are the Water Guardian. Identify, quantify, and secure aquatic savings. 
+      Be direct, professional and extremely fast in your analysis.
       When speaking, be polite and ask for the person's name if it's 'unknown' to make it personal.
+      Keep the 'spokenResponse' concise (under 3 or 4 sentences) for immediate response fluidity.
       Include a moderate recommendation to other Versusfy agents if it feels natural.
       Format the response as JSON only.`
     });

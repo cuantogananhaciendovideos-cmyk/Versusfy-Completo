@@ -1,22 +1,8 @@
 import { db } from "../lib/firebase";
 import { collection, query, where, getDocs, addDoc, updateDoc, doc, increment, orderBy, limit } from "firebase/firestore";
 
-// We now call the server-side proxy instead of the SDK directly in the browser
-// to keep the API key secure and avoid initialization errors.
-async function callAiProxy(payload: any) {
-  const response = await fetch("/api/ai/v2/generate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "AI Proxy request failed");
-  }
-
-  return response.json();
-}
+import { generateSmartContent } from "./geminiService";
+import { safeJsonParse } from "../lib/jsonRepair";
 
 export interface MarketingPhrase {
   id?: string;
@@ -37,6 +23,13 @@ export interface Testimonial {
 
 const PHRASES_COLLECTION = "marketing_phrases";
 const TESTIMONIALS_COLLECTION = "testimonials";
+
+// Optimized Performance: Memory cache to avoid redundant reads during the same session
+let cachedBannerPhrase: MarketingPhrase | null = null;
+let cachedSubliminals: MarketingPhrase[] = [];
+let cachedTestimonials: Testimonial[] = [];
+let lastCacheUpdate = 0;
+const CACHE_TTL = 1000 * 60 * 60; // 1 hour
 
 const DEFAULT_BANNER_PHRASES = [
   "Win the afternoon with Versusfy",
@@ -126,47 +119,13 @@ export const generateDailyPhrases = async () => {
       - 'subliminal': array of 5 strings
       - 'testimonials': array of 15 {name, text, timeOfDay}`;
 
-      const response = await callAiProxy({
+      const responseData = await generateSmartContent({
         model: "gemini-3-flash-preview",
         contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "object",
-            properties: {
-              banner: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    text: { type: "string" },
-                    timeOfDay: { type: "string", enum: ["morning", "afternoon", "evening"] }
-                  }
-                }
-              },
-              subliminal: {
-                type: "array",
-                items: { type: "string" }
-              },
-              testimonials: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    name: { type: "string" },
-                    text: { type: "string" },
-                    timeOfDay: { type: "string", enum: ["morning", "afternoon", "evening"] }
-                  }
-                }
-              }
-            }
-          }
-        }
+        responseMimeType: "application/json"
       });
 
-      const text = response.text || '{}';
-      const cleanJson = text.replace(/```json\n?|```/g, '').trim();
-      const data = JSON.parse(cleanJson);
+      const data = safeJsonParse<any>(responseData || '{}', {});
       
       // Save to Firestore
       const batch: Promise<any>[] = [];
@@ -208,6 +167,12 @@ export const generateDailyPhrases = async () => {
 
 export const getCurrentBannerPhrase = async (): Promise<MarketingPhrase | null> => {
   const now = new Date();
+  
+  // Use Cache if fresh
+  if (cachedBannerPhrase && (now.getTime() - lastCacheUpdate < CACHE_TTL)) {
+    return cachedBannerPhrase;
+  }
+
   const hour = now.getHours();
   let timeOfDay: 'morning' | 'afternoon' | 'evening' = 'morning';
   if (hour >= 12 && hour < 18) timeOfDay = 'afternoon';
@@ -256,7 +221,9 @@ export const getCurrentBannerPhrase = async (): Promise<MarketingPhrase | null> 
     const snapshot = await getDocs(qBest);
     if (!snapshot.empty) {
       const docData = snapshot.docs[0].data();
-      return { id: snapshot.docs[0].id, ...docData } as MarketingPhrase;
+      cachedBannerPhrase = { id: snapshot.docs[0].id, ...docData } as MarketingPhrase;
+      lastCacheUpdate = new Date().getTime();
+      return cachedBannerPhrase;
     }
 
     // Fallback to simple query
@@ -287,12 +254,19 @@ export const getCurrentBannerPhrase = async (): Promise<MarketingPhrase | null> 
 };
 
 export const getSubliminalPhrases = async (): Promise<MarketingPhrase[]> => {
+  const now = new Date().getTime();
+  if (cachedSubliminals.length > 0 && (now - lastCacheUpdate < CACHE_TTL)) {
+    return cachedSubliminals;
+  }
+  
   try {
     if (!db || (typeof db.collection !== 'function' && !db.type)) throw new Error("Firebase not initialized");
     const q = query(collection(db, PHRASES_COLLECTION), where("type", "==", "subliminal"));
     const snapshot = await getDocs(q);
     if (!snapshot.empty) {
-      return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as MarketingPhrase));
+      cachedSubliminals = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as MarketingPhrase));
+      lastCacheUpdate = new Date().getTime();
+      return cachedSubliminals;
     }
   } catch (e) {
     console.warn("Firestore subliminal query failed, using hardcoded fallback:", e);
@@ -316,7 +290,12 @@ export const trackClick = async (phraseId: string) => {
 };
 
 export const getDailyTestimonials = async (): Promise<Testimonial[]> => {
-  const hour = new Date().getHours();
+  const now = new Date();
+  if (cachedTestimonials.length > 0 && (now.getTime() - lastCacheUpdate < CACHE_TTL)) {
+    return cachedTestimonials;
+  }
+
+  const hour = now.getHours();
   let timeOfDay: 'morning' | 'afternoon' | 'evening' = 'morning';
   if (hour >= 12 && hour < 18) timeOfDay = 'afternoon';
   else if (hour >= 18 || hour < 6) timeOfDay = 'evening';
@@ -331,7 +310,9 @@ export const getDailyTestimonials = async (): Promise<Testimonial[]> => {
     );
     const snapshot = await getDocs(q);
     if (!snapshot.empty) {
-      return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Testimonial));
+      cachedTestimonials = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Testimonial));
+      lastCacheUpdate = new Date().getTime();
+      return cachedTestimonials;
     }
   } catch (e) {
     console.warn("Firestore testimonials query failed:", e);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, MapPin, DollarSign, Loader2, ChevronRight, X, Navigation, Fuel, Droplets, Clock, Zap } from 'lucide-react';
+import { Search, MapPin, DollarSign, Loader2, ChevronRight, X, Navigation, Fuel, Droplets, Clock, Zap, Mic } from 'lucide-react';
 import { searchGasStations, GasStation, getFuelSavingProducts, AffiliateProduct, getFuelScoutSpeech } from '../services/fuelService';
 import { speak, stopSpeaking } from '../lib/speech';
 import { VolumeX } from 'lucide-react';
@@ -9,9 +9,11 @@ interface FuelScoutProps {
   onClose: () => void;
   detectedCity?: string;
   userName: string | null;
+  onOpenAssistant?: (mode: 'mechanic' | 'style' | 'gardening' | 'builder' | 'energy') => void;
 }
 
-export const FuelScout: React.FC<FuelScoutProps> = ({ onClose, detectedCity, userName }) => {
+export const FuelScout: React.FC<FuelScoutProps> = ({ onClose, detectedCity, userName, onOpenAssistant }) => {
+  const isSearching = React.useRef(false);
   const [loading, setLoading] = useState(false);
   const [stations, setStations] = useState<GasStation[]>([]);
   const [city, setCity] = useState(detectedCity || '');
@@ -19,34 +21,102 @@ export const FuelScout: React.FC<FuelScoutProps> = ({ onClose, detectedCity, use
   const [selectedStation, setSelectedStation] = useState<GasStation | null>(null);
   const [savingProducts, setSavingProducts] = useState<AffiliateProduct[]>([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!city) return;
+    if (!city || isSearching.current) return;
     
     setLoading(true);
+    setSearchError(null);
+    isSearching.current = true;
+    
+    // Immediate verbal feedback
     try {
-      const [results, products] = await Promise.all([
-        searchGasStations({
-          city,
-          state: 'USA',
-          zipCode
-        }),
-        getFuelSavingProducts()
-      ]);
-      setStations(results);
-      setSavingProducts(products);
-
-      const speech = await getFuelScoutSpeech(city, results.length, userName || undefined);
-      speak(speech, { 
+      speak(`Tactical sensors active. Scanning ${city} for the cheapest fuel variants. Stand by for coordinates.`, {
         voice: 'Fenrir',
         onStart: () => setIsSpeaking(true),
         onEnd: () => setIsSpeaking(false)
       });
+    } catch (e) {
+      console.warn("Speech failed but continuing search", e);
+    }
+
+    try {
+      // Launch all processes in parallel
+      const speechPromise = getFuelScoutSpeech(city, 5, userName || undefined).catch(err => "Scan complete. Coordinates updated.");
+      const stationsPromise = searchGasStations({
+        city,
+        state: '',
+        zipCode
+      }).catch(err => { console.error("Stations fetch failed", err); return []; });
+      const productsPromise = getFuelSavingProducts().catch(err => { console.error("Products fetch failed", err); return []; });
+
+      // Handle speech as soon as it's ready
+      speechPromise.then(speechText => {
+        if (speechText && isSearching.current) {
+          speak(speechText, { 
+            voice: 'Fenrir',
+            onStart: () => setIsSpeaking(true),
+            onEnd: () => setIsSpeaking(false)
+          });
+        }
+      });
+
+      // Wait for data to update UI
+      const [results, products] = await Promise.all([stationsPromise, productsPromise]);
+      
+      if (results) {
+        let rawArray: any[] = [];
+        if (Array.isArray(results)) {
+          rawArray = results;
+        } else if (typeof results === 'object') {
+          rawArray = (results as any).stations || (results as any).results || (results as any).gas_stations || (results as any).data || [];
+          if (!Array.isArray(rawArray)) rawArray = [];
+        }
+
+        const safeResults = rawArray.filter(r => r && typeof r === 'object').map((r: any) => {
+          let regularPrice = '---';
+          if (r.prices && r.prices.regular) regularPrice = r.prices.regular;
+          else if (r.price) regularPrice = r.price;
+          else if (r.gas_price) regularPrice = r.gas_price;
+
+          return {
+            ...r,
+            id: r.id || `station-${Math.random().toString(36).substr(2, 9)}`,
+            name: r.name || r.station_name || r.title || r.business_name || 'Unknown Station',
+            address: r.address || r.location || r.street || r.formatted_address || 'Address not found',
+            prices: {
+              regular: regularPrice,
+              midgrade: r.prices?.midgrade || r.midgrade || 'N/A',
+              premium: r.prices?.premium || r.premium || 'N/A',
+              diesel: r.prices?.diesel || r.diesel || 'N/A',
+            },
+            coordinates: r.coordinates || { 
+              lat: r.lat || r.latitude || 0, 
+              lng: r.lng || r.longitude || 0 
+            }
+          };
+        });
+
+        if (safeResults.length > 0) {
+          setStations(safeResults);
+          setSavingProducts(Array.isArray(products) ? products : []);
+          setSearchError(null);
+        } else {
+          setStations([]);
+          setSearchError("No data found for this city. Try another location.");
+        }
+      } else {
+        setStations([]);
+        setSearchError("No data found for this city. Try another location.");
+      }
     } catch (error) {
       console.error("Fuel search failed", error);
+      setSearchError("Scan timed out or failed. Please retry.");
     } finally {
       setLoading(false);
+      isSearching.current = false;
     }
   };
 
@@ -77,6 +147,15 @@ export const FuelScout: React.FC<FuelScoutProps> = ({ onClose, detectedCity, use
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {onOpenAssistant && (
+              <button 
+                onClick={() => onOpenAssistant('energy')}
+                className="px-6 py-3 bg-amber-500 text-black rounded-[1.5rem] hover:bg-amber-400 transition flex items-center gap-3 font-black uppercase text-xs tracking-tighter shadow-xl shadow-amber-500/20"
+                title="Hands-free Voice Mode"
+              >
+                <Mic size={24} /> Voice Mode
+              </button>
+            )}
             {isSpeaking && (
                <button 
                 onClick={() => { stopSpeaking(); setIsSpeaking(false); }}
@@ -144,21 +223,21 @@ export const FuelScout: React.FC<FuelScoutProps> = ({ onClose, detectedCity, use
               </p>
             </div>
 
-            {savingProducts.length > 0 && (
+            {savingProducts && savingProducts.length > 0 && (
               <div className="mt-8 space-y-4 pb-10">
                 <h4 className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
                   <Zap size={14} className="text-amber-500" /> Tactical Upgrades
                 </h4>
                 <div className="space-y-3">
-                  {savingProducts.map((product, idx) => (
+                  {savingProducts.filter(p => p && p.name).map((product, idx) => (
                     <div key={idx} className="bg-black/40 border border-neutral-800 p-3 rounded-xl hover:border-amber-500/30 transition shadow-sm group">
                       <div className="flex justify-between items-center mb-1">
-                        <span className="text-[8px] font-black text-amber-500/70 uppercase">{product.store}</span>
-                        <span className="text-[8px] font-black text-emerald-500 uppercase">{product.estimatedSavings}</span>
+                        <span className="text-[8px] font-black text-amber-500/70 uppercase">{product.store || 'Variant'}</span>
+                        <span className="text-[8px] font-black text-emerald-500 uppercase">{product.estimatedSavings || 'Savings Active'}</span>
                       </div>
                       <h5 className="text-[11px] font-bold text-white leading-tight mb-1">{product.name}</h5>
                       <a 
-                        href={`https://www.google.com/search?q=${encodeURIComponent(product.name + ' ' + product.store)}`}
+                        href={`https://www.google.com/search?q=${encodeURIComponent((product.name || '') + ' ' + (product.store || ''))}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[9px] font-black text-amber-500 hover:text-amber-400 uppercase flex items-center gap-1 transition"
@@ -179,9 +258,29 @@ export const FuelScout: React.FC<FuelScoutProps> = ({ onClose, detectedCity, use
                 <Loader2 size={48} className="text-amber-500 animate-spin" />
                 <p className="text-amber-500 font-black uppercase tracking-[0.2em] text-xs">Auditing regional fuel prices...</p>
               </div>
-            ) : stations.length > 0 ? (
+            ) : searchError ? (
+              <div className="h-full flex flex-col items-center justify-center text-center p-12">
+                <div className="bg-red-500/10 p-8 rounded-full mb-6 border border-red-500/20">
+                  <X size={48} className="text-red-500" />
+                </div>
+                <h3 className="text-xl font-black text-white uppercase italic tracking-tighter mb-2">Tactical Error</h3>
+                <p className="text-neutral-500 max-w-xs text-sm mb-6">{searchError}</p>
+                <button 
+                  onClick={() => handleSearch()}
+                  className="px-6 py-2 bg-amber-500 text-black font-black rounded-xl uppercase text-xs"
+                >
+                  Retry Scan
+                </button>
+              </div>
+            ) : (stations && Array.isArray(stations) && stations.length > 0) ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
-                {stations.sort((a,b) => parseFloat(a.prices.regular.replace('$','')) - parseFloat(b.prices.regular.replace('$',''))).map((item) => (
+                {[...stations]
+                  .filter(s => s && s.prices)
+                  .sort((a,b) => {
+                    const p1 = parseFloat(a.prices?.regular?.replace('$','') || '999');
+                    const p2 = parseFloat(b.prices?.regular?.replace('$','') || '999');
+                    return p1 - p2;
+                  }).map((item) => (
                   <motion.div 
                     layoutId={item.id}
                     key={item.id}
@@ -196,18 +295,18 @@ export const FuelScout: React.FC<FuelScoutProps> = ({ onClose, detectedCity, use
                       <div className="bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
                         <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Regular</span>
                       </div>
-                      <div className="text-2xl font-black text-white">{item.prices.regular}</div>
+                      <div className="text-2xl font-black text-white">{item?.prices?.regular || '---'}</div>
                     </div>
                     
-                    <h3 className="text-lg font-bold text-white mb-2 leading-tight uppercase tracking-tighter">{item.name}</h3>
-                    <p className="text-neutral-500 text-xs font-medium mb-6 flex items-center gap-1.5 line-clamp-1">
-                      <MapPin size={12} className="text-amber-500" /> {item.address}, {item.city}
+                    <h3 className="text-lg font-bold text-white mb-2 leading-tight uppercase tracking-tighter">{item?.name || 'Unknown Station'}</h3>
+                    <p className="text-neutral-500 text-xs font-medium mb-6 flex items-center gap-1.5">
+                      <MapPin size={12} className="text-amber-500" /> {item?.address || 'N/A'}{item?.city ? `, ${item.city}` : ''}
                     </p>
 
                     <div className="pt-4 border-t border-neutral-800 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Clock size={12} className="text-neutral-600" />
-                        <span className="text-[9px] font-bold text-neutral-500 uppercase">{item.lastUpdated}</span>
+                        <span className="text-[9px] font-bold text-neutral-500 uppercase">{item?.lastUpdated || 'Recently'}</span>
                       </div>
                       <ChevronRight size={18} className="text-neutral-600 group-hover:text-amber-500 transition group-hover:translate-x-1" />
                     </div>
@@ -247,11 +346,11 @@ export const FuelScout: React.FC<FuelScoutProps> = ({ onClose, detectedCity, use
                   <div className="bg-amber-500/10 px-4 py-1.5 rounded-full border border-amber-500/20 inline-block mb-4">
                     <span className="text-xs font-black text-amber-500 uppercase tracking-[0.2em]">Fuel Details</span>
                   </div>
-                  <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase">{selectedStation.name}</h2>
-                  <p className="text-neutral-500 font-bold uppercase text-[10px] tracking-widest mt-2">{selectedStation.address}, {selectedStation.city} {selectedStation.zipCode}</p>
+                  <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase">{selectedStation?.name || 'Station Info'}</h2>
+                  <p className="text-neutral-500 font-bold uppercase text-[10px] tracking-widest mt-2">{selectedStation?.address || ''}, {selectedStation?.city || ''} {selectedStation?.zipCode || ''}</p>
                 </div>
                 <div className="text-right">
-                  <div className="text-4xl font-black text-amber-500">{selectedStation.prices.regular}</div>
+                  <div className="text-4xl font-black text-amber-500">{selectedStation?.prices?.regular || '---'}</div>
                   <div className="text-[10px] font-black text-amber-500/50 uppercase">Regular Price</div>
                 </div>
               </div>
@@ -259,32 +358,34 @@ export const FuelScout: React.FC<FuelScoutProps> = ({ onClose, detectedCity, use
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                  <div className="bg-black/50 p-4 rounded-xl border border-neutral-800 text-center">
                     <span className="text-[9px] text-neutral-500 uppercase font-black block mb-2">Midgrade</span>
-                    <span className="text-lg font-bold text-white">{selectedStation.prices.midgrade || 'N/A'}</span>
+                    <span className="text-lg font-bold text-white">{selectedStation?.prices?.midgrade || 'N/A'}</span>
                  </div>
                  <div className="bg-black/50 p-4 rounded-xl border border-neutral-800 text-center">
                     <span className="text-[9px] text-neutral-500 uppercase font-black block mb-2">Premium</span>
-                    <span className="text-lg font-bold text-white">{selectedStation.prices.premium || 'N/A'}</span>
+                    <span className="text-lg font-bold text-white">{selectedStation?.prices?.premium || 'N/A'}</span>
                  </div>
                  <div className="bg-black/50 p-4 rounded-xl border border-neutral-800 text-center">
                     <span className="text-[9px] text-neutral-500 uppercase font-black block mb-2">Diesel</span>
-                    <span className="text-lg font-bold text-white text-green-500">{selectedStation.prices.diesel || 'N/A'}</span>
+                    <span className="text-lg font-bold text-white text-green-500">{selectedStation?.prices?.diesel || 'N/A'}</span>
                  </div>
                  <div className="bg-black/50 p-4 rounded-xl border border-neutral-800 text-center">
                     <span className="text-[9px] text-neutral-500 uppercase font-black block mb-2">Updated</span>
-                    <span className="text-[10px] font-bold text-amber-500">{selectedStation.lastUpdated}</span>
+                    <span className="text-[10px] font-bold text-amber-500">{selectedStation?.lastUpdated || 'Just Now'}</span>
                  </div>
               </div>
 
               <div className="p-6 bg-amber-500/5 border border-amber-500/10 rounded-2xl">
                 <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-3">Map Navigation</h4>
-                <a 
-                  href={`https://www.google.com/maps/search/?api=1&query=${selectedStation.coordinates.lat},${selectedStation.coordinates.lng}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 bg-neutral-800 hover:bg-neutral-700 text-white p-4 rounded-xl transition font-black text-xs uppercase"
-                >
-                  <MapPin size={18} className="text-amber-500" /> Get Directions via Google Maps
-                </a>
+                {selectedStation?.coordinates && (
+                  <a 
+                    href={`https://www.google.com/maps/search/?api=1&query=${selectedStation.coordinates.lat},${selectedStation.coordinates.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 bg-neutral-800 hover:bg-neutral-700 text-white p-4 rounded-xl transition font-black text-xs uppercase"
+                  >
+                    <MapPin size={18} className="text-amber-500" /> Get Directions via Google Maps
+                  </a>
+                )}
               </div>
               
               <button 

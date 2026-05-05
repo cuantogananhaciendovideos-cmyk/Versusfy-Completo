@@ -37,7 +37,7 @@ const finalConfig = {
   messagingSenderId: getEnv('VITE_FIREBASE_MESSAGING_SENDER_ID', 'messagingSenderId', firebaseConfig.messagingSenderId),
   appId: getEnv('VITE_FIREBASE_APP_ID', 'appId', firebaseConfig.appId),
   measurementId: getEnv('VITE_FIREBASE_MEASUREMENT_ID', 'measurementId', firebaseConfig.measurementId),
-  databaseId: getEnv('VITE_FIREBASE_DATABASE_ID', 'firestoreDatabaseId', 'ai-studio-f0c1260c-872e-4bbe-ba1c-fdb9dc1d1205')
+  databaseId: getEnv('VITE_FIREBASE_DATABASE_ID', 'firestoreDatabaseId', firebaseConfig.firestoreDatabaseId || 'ai-studio-f0c1260c-872e-4bbe-ba1c-fdb9dc1d1205')
 };
 
 // Remove the forced logic that was overriding with (default)

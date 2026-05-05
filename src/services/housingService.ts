@@ -85,8 +85,9 @@ export const searchHousing = async (options: {
 
   try {
     const text = await generateSmartContent({
-      model: "gemini-3-flash-preview", 
+      model: "gemini-3-flash-preview",
       contents: prompt,
+      tools: [{ google_search_retrieval: {} }],
       systemInstruction: `You are the Versusfy Real Estate Tactical Expert. Use your real-time search capabilities to find actual housing listings in the USA.
       Return ONLY a JSON array of objects with the following keys:
       id (string), type ("rent" or "sale"), price (string), address (string), city (string), state (string), zipCode (string), description (string), features (string array), contactName (string), contactPhone (string), contactEmail (string), coordinates (object with lat and lng number).

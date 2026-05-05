@@ -40,73 +40,54 @@ export const trackVisit = async () => {
 };
 
 export const getVisitorStats = (callback: (stats: VisitorStats) => void) => {
-  const now = new Date();
-  
-  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-  const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-  const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+  if (!db || (typeof db.collection !== 'function' && !db.type)) {
+    callback({
+      online: 1,
+      lastHour: 5,
+      last24Hours: 120,
+      lastDay: 120,
+      lastWeek: 850,
+      lastMonth: 3400,
+      lastYear: 42000
+    });
+    return () => {};
+  }
 
-  const fetchStats = async () => {
-    if (!db || (typeof db.collection !== 'function' && !db.type)) {
-      callback({
-        online: 1,
-        lastHour: 5,
-        last24Hours: 120,
-        lastDay: 120,
-        lastWeek: 850,
-        lastMonth: 3400,
-        lastYear: 42000
-      });
-      return;
-    }
+  // Use onSnapshot for the "Online" status (last 5 minutes)
+  const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
+  const qOnline = query(collection(db, VISITORS_COLLECTION), where("lastSeen", ">=", fiveMinAgo));
+
+  const unsubscribe = onSnapshot(qOnline, async (snapshot) => {
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+
     try {
-      const qYear = query(collection(db, VISITORS_COLLECTION), where("timestamp", ">=", oneYearAgo));
-      const qMonth = query(collection(db, VISITORS_COLLECTION), where("timestamp", ">=", oneMonthAgo));
-      const qWeek = query(collection(db, VISITORS_COLLECTION), where("timestamp", ">=", oneWeekAgo));
-      const qDay = query(collection(db, VISITORS_COLLECTION), where("timestamp", ">=", oneDayAgo));
-      const q24h = query(collection(db, VISITORS_COLLECTION), where("timestamp", ">=", twentyFourHoursAgo));
-      const qHour = query(collection(db, VISITORS_COLLECTION), where("timestamp", ">=", oneHourAgo));
-      const qOnline = query(collection(db, VISITORS_COLLECTION), where("lastSeen", ">=", fiveMinutesAgo));
-
-      const [sYear, sMonth, sWeek, sDay, s24h, sHour, sOnline] = await Promise.all([
-        getDocs(qYear),
-        getDocs(qMonth),
-        getDocs(qWeek),
-        getDocs(qDay),
-        getDocs(q24h),
-        getDocs(qHour),
-        getDocs(qOnline)
+      // Historical stays with getDocs to avoid massive persistent listeners for all time
+      const [sYear, sMonth, sWeek, sDay, sHour] = await Promise.all([
+        getDocs(query(collection(db, VISITORS_COLLECTION), where("timestamp", ">=", oneYearAgo))),
+        getDocs(query(collection(db, VISITORS_COLLECTION), where("timestamp", ">=", oneMonthAgo))),
+        getDocs(query(collection(db, VISITORS_COLLECTION), where("timestamp", ">=", oneWeekAgo))),
+        getDocs(query(collection(db, VISITORS_COLLECTION), where("timestamp", ">=", twentyFourHoursAgo))),
+        getDocs(query(collection(db, VISITORS_COLLECTION), where("timestamp", ">=", oneHourAgo)))
       ]);
 
       callback({
-        online: sOnline.size || 1, // At least the current user
+        online: snapshot.size || 1,
         lastHour: sHour.size,
-        last24Hours: s24h.size,
+        last24Hours: sDay.size,
         lastDay: sDay.size,
         lastWeek: sWeek.size,
         lastMonth: sMonth.size,
         lastYear: sYear.size
       });
     } catch (e) {
-      console.error("Error fetching stats:", e);
-      // Fallback values
-      callback({
-        online: 1,
-        lastHour: 5,
-        last24Hours: 120,
-        lastDay: 120,
-        lastWeek: 850,
-        lastMonth: 3400,
-        lastYear: 42000
-      });
+      console.error("Historical stats fetch failed", e);
     }
-  };
+  });
 
-  fetchStats();
-  const interval = setInterval(fetchStats, 300000); // Refresh every 5 mins
-  return () => clearInterval(interval);
+  return unsubscribe;
 };

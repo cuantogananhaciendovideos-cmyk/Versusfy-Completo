@@ -69,10 +69,11 @@ export const getFuelScoutSpeech = async (city: string, stationsCount: number, us
 
 export const searchGasStations = async (options: {
   city: string;
-  state: string;
+  state?: string;
   zipCode?: string;
 }) => {
-  const prompt = `Find 5 currently cheapest gas stations in ${options.city}, ${options.state} ${options.zipCode ? options.zipCode : ''}.
+  const locationStr = `${options.city}${options.state ? ', ' + options.state : ''} ${options.zipCode || ''}`.trim();
+  const prompt = `Find 5 currently cheapest gas stations in ${locationStr}.
   
   For each station, find the current price for Regular, Midgrade, Premium, and Diesel if available.
   Include the exact address and format the coordinates (latitude and longitude) for Google Maps integration.
@@ -83,11 +84,19 @@ export const searchGasStations = async (options: {
     const text = await generateSmartContent({
       model: "gemini-3-flash-preview", 
       contents: prompt,
+      tools: [{ google_search_retrieval: {} }],
       systemInstruction: `You are the Versusfy Fuel Tactical Expert. Use your real-time search capabilities to find the most accurate and cheapest gas station prices in the USA.
-      Return ONLY a JSON array of objects with the following keys:
-      id (string), name (string), address (string), city (string), state (string), zipCode (string), prices (object with keys regular, midgrade, premium, diesel as strings), lastUpdated (string), coordinates (object with lat and lng number).
+      Return ONLY a pure JSON array of objects. Keys:
+      - name (official station name)
+      - address (FULL street address)
+      - city
+      - state
+      - zipCode
+      - prices (object with regular, midgrade, premium, diesel strings e.g. "$3.15")
+      - lastUpdated (e.g. "1 hour ago")
+      - coordinates (object with lat and lng float numbers)
       
-      Ensure you prioritize the lowest prices to help USA families save money immediately.`
+      CRITICAL: You MUST include the exact "name" and "address" for every station. Priority: lowest "regular" price first.`
     });
 
     return safeJsonParse<GasStation[]>(text || '[]', []);

@@ -1,6 +1,7 @@
 import { db } from "../lib/firebase";
 import { doc, getDoc, setDoc, updateDoc, increment, arrayUnion } from "firebase/firestore";
 import { generateSmartContent } from "./geminiService";
+import { safeJsonParse } from "../lib/jsonRepair";
 
 export interface TrendingComparison {
   id: string;
@@ -55,8 +56,7 @@ export const getTrendingComparisons = async (): Promise<TrendingComparison[]> =>
       systemInstruction: "You are a trends analyst for Versusfy. Generate SEO-optimized trending comparisons."
     });
 
-    const cleanText = (response || '[]').replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-    const comparisons = JSON.parse(cleanText);
+    const comparisons = safeJsonParse<TrendingComparison[]>(response || '[]', getDefaultTrends());
 
     // Save to cache
     await setDoc(docRef, { comparisons, generatedAt: new Date().toISOString() });

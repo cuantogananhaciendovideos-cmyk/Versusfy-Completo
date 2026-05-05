@@ -9,9 +9,10 @@ interface HousingSearchProps {
   onClose: () => void;
   detectedCity?: string;
   userName: string | null;
+  onOpenAssistant?: (mode: 'builder' | 'space') => void;
 }
 
-export const HousingSearch: React.FC<HousingSearchProps> = ({ onClose, detectedCity, userName }) => {
+export const HousingSearch: React.FC<HousingSearchProps> = ({ onClose, detectedCity, userName, onOpenAssistant }) => {
   const [loading, setLoading] = useState(false);
   const [listings, setListings] = useState<HousingListing[]>([]);
   const [searchType, setSearchType] = useState<'rent' | 'sale'>('rent');
@@ -98,6 +99,15 @@ export const HousingSearch: React.FC<HousingSearchProps> = ({ onClose, detectedC
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {onOpenAssistant && (
+               <button 
+                 onClick={() => onOpenAssistant('builder')}
+                 className="px-6 py-3 bg-emerald-green text-black rounded-[1.5rem] hover:bg-emerald-400 transition flex items-center gap-3 font-black uppercase text-xs tracking-tighter shadow-xl shadow-emerald-green/20"
+                 title="Hands-free Voice Mode"
+               >
+                 <Mic size={24} /> Voice Mode
+               </button>
+            )}
             {isSpeaking && (
                <button 
                 onClick={() => { stopSpeaking(); setIsSpeaking(false); }}

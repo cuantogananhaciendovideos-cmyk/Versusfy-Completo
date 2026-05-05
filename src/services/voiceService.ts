@@ -81,32 +81,34 @@ export async function speakText(text: string, voice: AgentVoice = 'Puck', onEnd?
   try {
     console.log(`[VOICE SERVICE] Requesting audio for voice: ${voice} via Proxy`);
     
-    // Add persona instructions for the TTS model if it's a specialized voice
-    let processedText = text;
-    if (voice === 'Fenrir') {
-      processedText = `Say with a very deep, husky, masculine foreman voice: ${text}`;
-    } else if (voice === 'Charon') {
-      processedText = `Say with a deep, authoritative, resonant masculine voice: ${text}`;
-    } else if (voice === 'Zephyr') {
-      processedText = `Say with a gravelly, seasoned construction worker voice: ${text}`;
-    }
+    // Standard Gemini voices: Aoide, Charon, Fenrir, Kore, Puck, Zephyr
+    const validVoice = VALID_GEMINI_VOICES.includes(voice) ? voice : 'Aoide';
+
+    // 30 second timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     const response = await fetch('/api/ai/v2/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
       body: JSON.stringify({
         model: "gemini-3.1-flash-tts-preview",
-        contents: [{ parts: [{ text: processedText }] }],
+        contents: [{ parts: [{ text }] }],
         config: {
           responseModalities: ["AUDIO"],
           speechConfig: {
             voiceConfig: {
-              voiceName: VALID_GEMINI_VOICES.includes(voice) ? voice : 'Aoide'
+              prebuiltVoiceConfig: {
+                voiceName: validVoice
+              }
             }
           }
         }
       })
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
         const errText = await response.text();
@@ -119,13 +121,16 @@ export async function speakText(text: string, voice: AgentVoice = 'Puck', onEnd?
     if (base64Audio) {
       console.log(`[VOICE SERVICE] Received audio via Proxy`);
       
-      // Conversion from base64 to ArrayBuffer
-      const byteCharacters = atob(base64Audio);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      // Faster base64 to ArrayBuffer conversion using fetch
+      let byteArray: Uint8Array;
+      try {
+        const res = await fetch(`data:application/octet-stream;base64,${base64Audio}`);
+        const buffer = await res.arrayBuffer();
+        byteArray = new Uint8Array(buffer);
+      } catch (convError) {
+        console.error("[VOICE SERVICE] Buffer conversion failed:", convError);
+        throw new Error("INVALID_BASE64_AUDIO");
       }
-      const byteArray = new Uint8Array(byteNumbers);
       
       let audioBuffer;
       try {
@@ -166,10 +171,19 @@ export async function speakText(text: string, voice: AgentVoice = 'Puck', onEnd?
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
-      const isMale = ['Charon', 'Fenrir', 'Zephyr'].includes(voice);
+      const isMale = ['Charon', 'Fenrir', 'Zephyr', 'Puck'].includes(voice);
       
-      utterance.pitch = isMale ? 0.7 : 1.0;
-      utterance.rate = isMale ? 0.8 : 0.9;
+      // Voice customization logic
+      if (voice === 'Puck') {
+        utterance.pitch = 0.95;
+        utterance.rate = 1.0;
+      } else if (voice === 'Fenrir') {
+        utterance.pitch = 0.8; 
+        utterance.rate = 0.95; 
+      } else {
+        utterance.pitch = isMale ? 0.75 : (['Kore', 'Aoide'].includes(voice) ? 1.02 : 1.0);
+        utterance.rate = isMale ? 0.98 : (['Kore', 'Aoide'].includes(voice) ? 1.0 : 0.95);
+      }
       
       const voices = window.speechSynthesis.getVoices();
       let bestVoice;
