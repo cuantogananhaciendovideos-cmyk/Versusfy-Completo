@@ -17,7 +17,7 @@ import { searchGuitarCenterProducts } from './services/guitarcenterService';
 import { searchSweetwaterProducts } from './services/sweetwaterService';
 import { searchMusiciansFriendProducts } from './services/musiciansfriendService';
 import { searchSamAshProducts } from './services/samashService';
-import { Search, Loader2, Info, ShieldCheck, ShieldAlert, Home, Mail, Sun, Moon, RotateCcw, Facebook, Instagram, Twitter, MessageCircle, AtSign, HelpCircle, Users, Clock, Calendar, Globe, Share2, QrCode, Ticket, TrendingDown, Mic, Volume2, VolumeX, ShoppingBag, Calculator, MapPin, Cloud, Sparkles, Zap, CheckCircle2, XCircle, BarChart3, Wand2, Trophy, Coins, Activity, ShieldPlus, Brain, Layout, Utensils, Code, Sprout, Palette, Shovel, Wrench, HardHat, Briefcase, Droplets, Lightbulb, Gamepad2, ChevronDown, Bot, ToyBrick, Rocket, Shirt, Gem, Footprints, Scissors, Brush, Pill, GraduationCap, BookOpen, Car, Music, Headphones, Building2, Fuel, X } from 'lucide-react';
+import { Search, Loader2, Info, ShieldCheck, ShieldAlert, Home, Mail, Sun, Moon, RotateCcw, Facebook, Instagram, Twitter, MessageCircle, AtSign, HelpCircle, Users, Clock, Calendar, Globe, Share2, QrCode, Ticket, TrendingDown, Mic, Volume2, VolumeX, ShoppingBag, Calculator, MapPin, Cloud, Sparkles, Zap, CheckCircle2, XCircle, BarChart3, Wand2, Trophy, Coins, Activity, ShieldPlus, Brain, Layout, Utensils, Code, Sprout, Palette, Shovel, Wrench, HardHat, Briefcase, Droplets, Lightbulb, Gamepad2, ChevronDown, Bot, ToyBrick, Rocket, Shirt, Gem, Footprints, Scissors, Brush, Pill, GraduationCap, BookOpen, Car, Music, Headphones, Building2, Fuel, X, Navigation } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import confetti from 'canvas-confetti';
@@ -37,6 +37,7 @@ import { EventSuggestions } from './components/EventSuggestions';
 import { VisualSearch } from './components/VisualSearch';
 import { RecipeBudgetConsultant } from './components/RecipeBudgetConsultant';
 import { OmniAssistant } from './components/OmniAssistant';
+import { PathfinderIntelligence } from './components/PathfinderIntelligence';
 import { HeroStatusShare } from './components/HeroStatusShare';
 import { TrendingWindow } from './components/TrendingWindow';
 import { SavingsCalculator } from './components/SavingsCalculator';
@@ -44,6 +45,8 @@ import { HousingSearch } from './components/HousingSearch';
 import { FuelScout } from './components/FuelScout';
 import { WaterGuardian } from './components/WaterGuardian';
 import { GasMaster } from './components/GasMaster';
+import { JobScout } from './components/JobScout';
+import { CouponScout } from './components/CouponScout';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { getTrendingComparisons, TrendingComparison } from './services/trendsService';
 import { Camera, Flame } from 'lucide-react';
@@ -120,7 +123,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [loadingSimilar, setLoadingSimilar] = useState(false);
   const [comparisonCategory, setComparisonCategory] = useState<'standard' | 'prompts' | 'websites' | 'ai_models' | 'restaurants' | 'video_games' | 'toys' | 'jewelry' | 'pharmacy' | 'academic' | 'mechanic' | 'musical' | 'electrician'>('standard');
-  const [view, setView] = useState<'home' | 'about' | 'privacy' | 'contact' | 'faq' | 'benefits' | 'personal-buyer' | 'special-events' | 'global-intel' | 'gardening' | 'mechanic' | 'construction' | 'offices' | 'video-games' | 'toys' | 'jewelry' | 'style-advisor' | 'pharmacy' | 'academic' | 'musical' | 'electrician' | 'housing' | 'fuel' | 'water' | 'gas'>('home');
+  const [view, setView] = useState<'home' | 'about' | 'privacy' | 'contact' | 'faq' | 'benefits' | 'personal-buyer' | 'special-events' | 'global-intel' | 'gardening' | 'mechanic' | 'construction' | 'offices' | 'video-games' | 'toys' | 'jewelry' | 'style-advisor' | 'pharmacy' | 'academic' | 'musical' | 'electrician' | 'housing' | 'fuel' | 'water' | 'gas' | 'jobs' | 'pathfinder' | 'coupons'>('home');
   const [isIAAgentsOpen, setIsIAAgentsOpen] = useState(false);
   const [contactForm, setContactForm] = useState({ email: '', message: '', _hp: '' });
   const [contactStatus, setContactStatus] = useState<'idle' | 'sending' | 'sent' | 'error' | 'spam'>('idle');
@@ -139,7 +142,7 @@ export default function App() {
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [autoAssistantListen, setAutoAssistantListen] = useState(false);
   const [agentFilter, setAgentFilter] = useState('All');
-  const [selectedAgentMode, setSelectedAgentMode] = useState<'style' | 'space' | 'gardening' | 'mechanic' | 'builder' | 'office' | 'energy' | 'pharmacy' | 'toy' | 'gamer' | 'academic' | 'musical' | undefined>(undefined);
+  const [selectedAgentMode, setSelectedAgentMode] = useState<'style' | 'space' | 'gardening' | 'mechanic' | 'builder' | 'office' | 'energy' | 'pharmacy' | 'toy' | 'gamer' | 'academic' | 'musical' | 'job' | 'pathfinder' | 'coupon' | undefined>(undefined);
   const [footerStats, setFooterStats] = useState({ savings: 0, deals: 0 });
   const [showHeroShare, setShowHeroShare] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
@@ -1035,108 +1038,112 @@ const ComparisonResultView = ({
       case 'about':
         return (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-4xl bg-white dark:bg-neutral-900 p-8 rounded-2xl border border-neutral-200 dark:border-neutral-800">
-            <h2 className="text-4xl font-bold mb-6 text-emerald-green">About Versusfy</h2>
+            <h2 className="text-4xl font-bold mb-6 text-emerald-green">About Versusfy Intelligence Network</h2>
             <div className="space-y-6 text-neutral-600 dark:text-neutral-300">
               <p>
-                Welcome to <strong>Versusfy</strong>, your premier destination for intelligent, AI-driven product comparisons. In an era of overwhelming consumer choices, Versusfy acts as your digital compass, cutting through the noise to deliver clear, data-backed insights that empower smarter purchasing decisions.
+                Welcome to <strong>Versusfy</strong>, the ultimate global intelligence network for product analysis, market dominance, and extreme economic optimization. In a world of infinite choices and hidden costs, Versusfy operates as your supreme tactical command, mobilizing a fleet of specialized AI Scouts to secure your financial and strategic advantage.
               </p>
               <p>
-                Our platform leverages cutting-edge <strong>Artificial Intelligence (AI)</strong> to analyze vast datasets from top-tier retailers, including <strong>Amazon, Walmart, eBay, The Home Depot, and Best Buy</strong>. By aggregating real-time information on features, specifications, and pricing, we provide a comprehensive comparison engine designed for the modern, efficiency-focused consumer.
+                Our infrastructure is powered by <strong>Titan-Class Generative AI</strong> that synchronizes real-time data from the world's most powerful retail nodes, including <strong>Amazon, Walmart, eBay, The Home Depot, Best Buy, and Guitar Center</strong>. We don't just compare; we audit the entire global marketplace to ensure you never pay a cent more than necessary.
               </p>
-              <h3 className="text-2xl font-semibold text-neutral-900 dark:text-white">Our Mission</h3>
+              <h3 className="text-2xl font-semibold text-neutral-900 dark:text-white">The Versusfy Doctrine</h3>
               <p>
-                At Versusfy, our mission is to democratize access to high-quality product research. We believe that every consumer deserves to make informed choices based on objective data, not marketing hype. Our minimalist, futuristic interface is engineered to prioritize user experience, ensuring that you get the answers you need—fast, accurate, and clutter-free.
+                Our philosophy is simple: <strong>Total Market Visibility.</strong> We believe that predictive intelligence should be available to every consumer. Whether you are buying a smartphone, auditing your monthly utility bills, or searching for tactical career growth, Versusfy provides the objective, data-driven edge required to triumph in today's economy.
               </p>
-              <h3 className="text-2xl font-semibold text-neutral-900 dark:text-white">Why Choose Versusfy?</h3>
+              <h3 className="text-2xl font-semibold text-neutral-900 dark:text-white">Why Mobilize with Versusfy?</h3>
               <ul className="list-disc list-inside space-y-2">
-                <li><strong>AI-Powered Insights:</strong> Advanced algorithms compare complex product attributes to highlight key differences.</li>
-                <li><strong>Weekly Duels (Trending):</strong> Our engine automatically identifies global trends and generates "Weekly Duels" to keep you informed of the most important market comparisons in real-time.</li>
-                <li><strong>Multi-Retailer Aggregation:</strong> Compare products across major marketplaces in a single, unified view.</li>
-                <li><strong>Privacy-First Approach:</strong> We adhere to a "Privacy by Design" philosophy, ensuring your search behavior remains private.</li>
-                <li><strong>Data-Driven Decisions:</strong> We focus on objective specifications and price ranges to help you find the best value.</li>
+                <li><strong>Multi-Agent Intelligence:</strong> A specialized scout for every domain of your life, from mechanics to fashion.</li>
+                <li><strong>Tactical Coupon Auditing:</strong> Automated sensors that isolate the highest-yield discount nodes in real-time.</li>
+                <li><strong>Situational Awareness:</strong> Real-time GPS and traffic intelligence via the Pathfinder unit.</li>
+                <li><strong>Visual Intelligence:</strong> Camera-based scanning for instant product IDs and diagnostics.</li>
+                <li><strong>Privacy by Design:</strong> High-level encryption and anonymous processing to protect your strategic intent.</li>
+                <li><strong>GEO-Targeted Logistics:</strong> Localized price audits specifically calibrated to your current coordinates.</li>
               </ul>
-              <div className="bg-emerald-green/5 p-6 rounded-2xl border border-emerald-green/20 mt-8">
-                <h4 className="font-bold text-emerald-green mb-3 text-lg italic uppercase">Weekly Duels & Trending Intel</h4>
-                <p className="text-sm">The <strong>Weekly Duels</strong> window (the pulsating "Trending" section) is our automated intelligence unit. It scans the collective consciousness of the global market to pick the the top comparisons of the moment. These "duels" are designed to give you a strategic advantage by revealing current market preferences and price-to-performance leaders before you even start your own search.</p>
-              </div>
+              
               <div className="bg-purple-500/5 p-6 rounded-2xl border border-purple-500/20 mt-8">
-                <h4 className="font-bold text-purple-600 dark:text-purple-400 mb-3 text-lg italic uppercase">Operational Units & Tactical Network</h4>
-                <p className="text-sm mb-4">Our specialized Scouts are strictly integrated with our Tactical Affiliate Network to ensure real-time precision sourcing:</p>
-                <div className="space-y-4 mb-6">
+                <h4 className="font-bold text-purple-600 dark:text-purple-400 mb-3 text-lg italic uppercase">The Tactical Intelligence Fleet</h4>
+                <p className="text-sm mb-4">Our specialized Operational Units are strictly integrated with the Tactical Affiliate Network:</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-emerald-green text-xs uppercase mb-2">● The Omni-Assistant Unit</h5>
-                    <p className="text-xs">The <strong>Pulsating Sphere</strong> at the corner is the Supreme Command. She can talk to you, listen to your voice commands, and perform instant comparisons. She is your direct interface with the entire Versusfy intelligence network.</p>
+                    <h5 className="font-bold text-emerald-green text-[10px] uppercase mb-1">● Omni-Assistant (Supreme Command)</h5>
+                    <p className="text-[10px]">The voice-activated interface. Manages the entire network, providing real-time market duels and summarized reports.</p>
                   </div>
                   <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-apple-red text-xs uppercase mb-2">● Tactical Visual Intelligence</h5>
-                    <p className="text-xs">The <strong>Visual Search</strong> window allows you to upload any image. Our engine identifies the product, its brand, and model instantly, placing it into a comparison duel without you typing a single letter.</p>
+                    <h5 className="font-bold text-blue-500 text-[10px] uppercase mb-1">● Coupon Scout (Discount Auditor)</h5>
+                    <p className="text-[10px]">Strictly audits for <strong>high-yield coupons and promo codes</strong>. Secures verified discount nodes for every product.</p>
                   </div>
                   <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-purple-600 text-xs uppercase mb-2">● Personal Style & Buyer Units</h5>
-                    <p className="text-xs">The <strong>Personal Buyer</strong> and <strong>Style Analyst</strong> units analyze your personal features or specific desires to find items that match your unique DNA and current budget constraints.</p>
+                    <h5 className="font-bold text-orange-500 text-[10px] uppercase mb-1">● Pathfinder Intelligence (GPS Ops)</h5>
+                    <p className="text-[10px]">Real-time <strong>traffic situational awareness</strong>. Optimizes your logistics and fuel-saving vectors globally.</p>
                   </div>
                   <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-blue-600 text-xs uppercase mb-2">● Specialized Architects & Scouts</h5>
-                    <p className="text-xs">We have dedicated windows for every domain: <strong>Mechanic Scout</strong> (vehicles), <strong>Master Builder</strong> (construction), <strong>Gardening Scout</strong> (landscape), <strong>Space Architect</strong> (interior design), and even a <strong>Recipe Budget Consultant</strong> to calculate your meal costs at Walmart USA.</p>
+                    <h5 className="font-bold text-amber-600 text-[10px] uppercase mb-1">● Job Scout (Career Intel)</h5>
+                    <p className="text-[10px]">Strategic recruitment intelligence. Monitors global hiring nodes to secure your next market victory.</p>
                   </div>
                   <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-amber-600 text-xs uppercase mb-2">● Strategic Housing Locator</h5>
-                    <p className="text-xs">The <strong>Versusfy Housing</strong> unit scans the USA for active rent and sale opportunities. It automatically detects your city via IP to find homes that match your budget and location needs, with direct contact data for landlords or agents.</p>
+                    <h5 className="font-bold text-pink-500 text-[10px] uppercase mb-1">● Style Scout (Personal Advisor)</h5>
+                    <p className="text-[10px]">Analyzes visual DNA to optimize makeup, clothing, and hair matching with retailer-direct pricing.</p>
                   </div>
                   <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-amber-500 text-xs uppercase mb-2">● Fuel Scout (Tactical Fuel Audit)</h5>
-                    <p className="text-xs">The <strong>Fuel Scout</strong> monitors regional gas prices in real-time. By detecting your location, it audits the cheapest gas stations nearby, providing prices for all fuel types and direct GPS navigation to maximize your daily savings.</p>
+                    <h5 className="font-bold text-red-600 text-[10px] uppercase mb-1">● Mechanical Scout (Vehicle Unit)</h5>
+                    <p className="text-[10px]">Diagnostic scans for engine parts and fault codes. Sources inventory from major US auto chains instantly.</p>
                   </div>
                   <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-blue-500 text-xs uppercase mb-2">● Water Guardian (Consumption Intelligence)</h5>
-                    <p className="text-xs">The <strong>Water Guardian</strong> analyzes your water bills via computer vision. It identifies over-consumption patterns and provides highly effective tactical countermeasures to reduce your monthly costs through hydraulic efficiency.</p>
+                    <h5 className="font-bold text-indigo-500 text-[10px] uppercase mb-1">● Academic Master (Scholar Node)</h5>
+                    <p className="text-[10px]">Advanced study intelligence. Explains complex concepts and audits school supplies for max budget efficiency.</p>
                   </div>
                   <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-orange-500 text-xs uppercase mb-2">● Gas Master (Cooking Efficiency)</h5>
-                    <p className="text-xs">The <strong>Gas Master</strong> audits your gaseous energy consumption. By analyzing your cooking and heating bills, it deploys thermal efficiency strategies to drastically reduce waste and maximize every penny spent on energy.</p>
+                    <h5 className="font-bold text-emerald-green text-[10px] uppercase mb-1">● Pro Gamer Scout (Elite Gear)</h5>
+                    <p className="text-[10px]">Tactical hardware sourcing for gaming dominance. Isolates the best specs in GPUs and peripherals.</p>
                   </div>
                   <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-amber-600 text-xs uppercase mb-2">● Economic Guard Units</h5>
-                    <p className="text-xs">The <strong>Coupon Tracker</strong> and <strong>Price Tracking</strong> systems continuously monitor the market to ensure the tactical offers you receive are the absolute best available in real-time.</p>
+                    <h5 className="font-bold text-purple-500 text-[10px] uppercase mb-1">● Pharmacy Scout (Health Auditor)</h5>
+                    <p className="text-[10px]">Medicine cost auditor. Compares Walgreens vs CVS vs Walmart vs Amazon instantly for pharmaceuticals.</p>
+                  </div>
+                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
+                    <h5 className="font-bold text-amber-500 text-[10px] uppercase mb-1">● Fuel Scout (Energy Monitor)</h5>
+                    <p className="text-[10px]">Monitors energy prices and fuel costs near you to optimize your commute and household utility spending.</p>
+                  </div>
+                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
+                    <h5 className="font-bold text-cyan-600 text-[10px] uppercase mb-1">● Hogar Scout (Housing Locator)</h5>
+                    <p className="text-[10px]">Real estate intelligence. Locates active rent/sale listings with map integration and direct contact protocols.</p>
+                  </div>
+                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
+                    <h5 className="font-bold text-teal-600 text-[10px] uppercase mb-1">● Recipe Scout (Food Intel)</h5>
+                    <p className="text-[10px]">Analyzes ingredients vs grocery budget. Audits Walmart and Amazon Fresh for the most efficient meal plan.</p>
+                  </div>
+                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
+                    <h5 className="font-bold text-lime-600 text-[10px] uppercase mb-1">● Gardening Scout (Agri-Tech)</h5>
+                    <p className="text-[10px]">Plant species health diagnostics and irrigation tech sourcing for your yard's specific micro-environment.</p>
+                  </div>
+                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
+                    <h5 className="font-bold text-stone-500 text-[10px] uppercase mb-1">● Master Builder (Project Unit)</h5>
+                    <p className="text-[10px]">Construction logistics. Scans sites to identify material phases and bulk pricing for sand, steel, and cement.</p>
                   </div>
                 </div>
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-[10px] font-medium opacity-70">
-                  <li><span className="text-purple-500">●</span> <strong>Trending Intelligence:</strong> Weekly Duels processing unit.</li>
-                  <li><span className="text-purple-500">●</span> <strong>Mechanic Scout:</strong> AutoZone, Pep Boys, Advance Auto, O'Reilly, Walmart, Amazon.</li>
-                  <li><span className="text-purple-500">●</span> <strong>Master Builder:</strong> Home Depot, Walmart, Amazon.</li>
-                  <li><span className="text-purple-500">●</span> <strong>Gardening Scout:</strong> Walmart, Amazon, Home Depot.</li>
-                  <li><span className="text-purple-500">●</span> <strong>Office Architect:</strong> Office Depot, Best Buy, Amazon.</li>
-                  <li><span className="text-purple-500">●</span> <strong>Video Game Assistant:</strong> Best Buy, Walmart, eBay.</li>
-                  <li><span className="text-purple-500">●</span> <strong>Toy Scout:</strong> Toys R Us, Walmart, Amazon.</li>
-                  <li><span className="text-purple-500">●</span> <strong>Pharmacy Scout:</strong> Walgreens, CVS, Walmart, Amazon.</li>
-                  <li><span className="text-purple-500">●</span> <strong>Academic Master:</strong> Best Buy, Walmart, Amazon, Office Depot.</li>
-                  <li><span className="text-purple-500">●</span> <strong>Musical Scout:</strong> Guitar Center, Sweetwater, Amazon, eBay.</li>
-                  <li><span className="text-purple-500">●</span> <strong>Electrician Scout:</strong> Best Buy, Home Depot, Walmart, Amazon.</li>
-                  <li><span className="text-purple-500">●</span> <strong>Housing Locator:</strong> Active Rent & Sale Tactical Database (USA).</li>
-                  <li><span className="text-purple-500">●</span> <strong>Fuel Scout:</strong> Real-time USA Gas Price Audit.</li>
-                  <li><span className="text-purple-500">●</span> <strong>Water Guardian:</strong> Visual Bill Analysis & Hydraulic Efficiency.</li>
-                  <li><span className="text-purple-500">●</span> <strong>Gas Master:</strong> Thermal Efficiency & Gas Bill Audit.</li>
-                </ul>
-              </div>
-              <div className="bg-emerald-green/5 p-6 rounded-2xl border border-emerald-green/20">
-                <h4 className="font-bold text-emerald-green mb-2 uppercase italic">Verified Tactical Partners</h4>
-                <p className="text-sm">All recommendations are EXCLUSIVELY sourced from our verified Affiliate Network (Amazon, Walmart, eBay, Best Buy, Home Depot, and specialized partners). This ensures every item has a valid, trackable deal and coupon support. We may earn a small commission from these links at no extra cost to you, which keeps Versusfy free.</p>
-              </div>
-              <div className="bg-emerald-green/10 p-6 rounded-2xl border border-emerald-green/30">
-                <h4 className="font-bold text-emerald-green mb-2 uppercase italic">Exclusive Community Benefits</h4>
-                <p className="text-sm">Buying through our tactical links unlocks <strong>exclusive, verified coupons</strong> and <strong>GEO-targeted offers</strong>. Additionally, every purchase activates our <strong>Free AI Price Alert</strong> service, ensuring you have the tactical advantage even after your search.</p>
+                <div className="bg-emerald-green/5 p-4 rounded-xl border border-emerald-green/20">
+                  <h6 className="text-[10px] uppercase font-black text-emerald-green mb-2">Global Partner Network</h6>
+                  <ul className="grid grid-cols-2 gap-2 text-[9px] font-bold opacity-80 uppercase tracking-tighter">
+                    <li>● Amazon Intelligence</li>
+                    <li>● Walmart Supercenter Audit</li>
+                    <li>● Best Buy Tech Node</li>
+                    <li>● Home Depot Material Ops</li>
+                    <li>● eBay Tactical Marketplace</li>
+                    <li>● Office Depot Station</li>
+                    <li>● Sweetwater Sound Lab</li>
+                  </ul>
+                </div>
               </div>
 
               <div className="bg-amber-500/10 p-6 rounded-2xl border border-amber-500/30 mt-8">
                  <h4 className="font-bold text-amber-600 dark:text-amber-400 mb-2 uppercase italic leading-none flex items-center gap-2">
                    <Calculator className="w-5 h-5 text-[#FFD700]" /> Savings Calculator (Elite Gold Unit)
                  </h4>
-                 <p className="text-sm italic mb-2">Our most prestigious economic instrument.</p>
-                 <p className="text-sm">The <strong>Savings Calculator</strong> is a tactical tool designed to quantify your shopping efficiency. Encased in a pure gold chassis with turquoise diamond buttons, it detects your location via IP in real-time to analyze regional price indexes. By inputting your daily or weekly spending, the calculator reveals your potential annual savings when optimized through Versusfy. These savings can be instantly attributed to your <strong>Community Hero</strong> status.</p>
+                 <p className="text-sm">The <strong>Savings Calculator</strong> is our most prestigious economic instrument. Encased in a pure gold chassis with turquoise diamond buttons, it detects your location via IP in real-time to analyze regional price indexes and quantify your annual tactical advantage.</p>
                </div>
 
               <p>
-                Whether you are researching the latest tech gadgets, home appliances, or everyday essentials, Versusfy is here to streamline your shopping journey. Join us in redefining how the world compares products.
+                From the latest iPhone vs Samsung duels to complex construction material audits, Versusfy is your definitive guide to market dominance.
               </p>
             </div>
           </motion.div>
@@ -1275,121 +1282,64 @@ const ComparisonResultView = ({
       case 'faq':
         return (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-4xl bg-white dark:bg-neutral-900 p-8 rounded-2xl border border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-300">
-            <h2 className="text-4xl font-bold mb-6 text-emerald-green">Frequently Asked Questions & How-To Guide</h2>
+            <h2 className="text-4xl font-bold mb-6 text-emerald-green">Tactical Operations: How-To Guide</h2>
             
-            <h3 className="text-2xl font-semibold mt-6 mb-3 text-neutral-900 dark:text-white">How to Use Versusfy</h3>
-            <ol className="list-decimal list-inside space-y-2 mb-6">
-              <li><strong>Enter Product A:</strong> Type the name of the product you are interested in into the "Product A" field.</li>
-              <li><strong>Find Similar Products:</strong> Click the search icon next to the "Product A" field. Versusfy will suggest similar products.</li>
-              <li><strong>Select Product B:</strong> Choose a similar product from the dropdown menu that appears.</li>
-              <li><strong>Compare:</strong> Click the "Compare" button.</li>
-              <li><strong>Analyze:</strong> Review the AI-generated comparison and check specific scores, specs, and the final expert verdict.</li>
-              <li><strong>Find Your New Home:</strong> Navigate to <strong>IA Agents</strong> and select <strong>"Housing Locator"</strong>. Enter your city and budget to find active rent/sale listings with direct contact info and map integration.</li>
-              <li><strong>Unlock & Save:</strong> Click the "Unlock Bundle" button to reveal exclusive coupons and GEO-targeted offers.</li>
-              <li><strong>Buy & Track:</strong> Purchase through our links to get these deals and activate your <strong>Free Price Alert</strong> for that product.</li>
-              <li><strong>Audit Your Savings:</strong> Click the <strong>"Savings Calculator"</strong> button. Enter your spending data to see your regional economic audit.</li>
-              <li><strong>Hero Status:</strong> Click <strong>"Claim Hero Status & Share"</strong> to generate your personalized savings ticket with your photo and name. If you use the calculator, your annual savings will be featured on your ticket.</li>
+            <h3 className="text-2xl font-semibold mt-6 mb-3 text-neutral-900 dark:text-white">Active Operational Protocol</h3>
+            <ol className="list-decimal list-inside space-y-2 mb-6 text-sm">
+              <li><strong>Initiate Recon:</strong> Enter your target product name in "Product A".</li>
+              <li><strong>Target Market Nodes:</strong> Use the search icon to identify alternatives and similar specs.</li>
+              <li><strong>Activate Duel:</strong> Click "Compare" for a deep-dive AI battle and final verdict.</li>
+              <li><strong>Secure Discounts:</strong> Deploy <strong>"Coupon Scout"</strong> to isolate real-time promo codes.</li>
+              <li><strong>Logistics Situational Awareness:</strong> Activate <strong>"Pathfinder Intelligence"</strong> for real-time traffic and GPS audits.</li>
+              <li><strong>Fuel Optimization:</strong> Mobilize <strong>"Fuel Scout"</strong> to find the cheapest energy nodes near your location.</li>
+              <li><strong>Housing Intelligence:</strong> Deploy <strong>"Hogar Scout"</strong> for real-time rent/sale reconnaissance.</li>
+              <li><strong>Material Mastery:</strong> Use <strong>"Master Builder"</strong> to identify construction material phases and bulk pricing.</li>
+              <li><strong>Household Performance:</strong> Use the <strong>"Savings Calculator"</strong> to audit your annual economy.</li>
+              <li><strong>Claim Hero Status:</strong> Generate your <strong>Savings Ticket</strong> flyer to lead your network.</li>
             </ol>
 
-            <h3 className="text-2xl font-semibold mt-8 mb-4 text-emerald-green border-b border-emerald-green/20 pb-2">Mastering Special Events AI Agent</h3>
-            <div className="space-y-6 mb-8">
+            <h3 className="text-2xl font-semibold mt-8 mb-4 text-emerald-green border-b border-emerald-green/20 pb-2">The AI Scout Manual</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 text-xs">
               <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-emerald-green text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">1</span>
-                  Access the Agent
+                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2 uppercase">
+                  <Navigation className="text-orange-500 w-4 h-4" /> Pathfinder Ops
                 </h4>
-                <p className="text-sm">Click the <strong>"Special Events AI Agent"</strong> button in the top navigation. This tool is specifically designed to handle gift-giving and event-planning stress.</p>
+                <p>Audits traffic vectors in real-time. Ensures your transport logistics are optimized for speed and fuel conservation across all global cities.</p>
               </div>
 
               <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-emerald-green text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">2</span>
-                  Check Upcoming Holidays
+                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2 uppercase">
+                  <Home className="text-cyan-600 w-4 h-4" /> Hogar Scout
                 </h4>
-                <p className="text-sm">The <strong>"Upcoming Special Date"</strong> section automatically tracks the next major celebration (like Mother's Day, Christmas, or Children's Day) and uses AI to recommend the top 5 perfect gifts for that specific occasion.</p>
+                <p>Locates active rent/sale listings with geographic precision. Provides map integration and direct contact protocols.</p>
               </div>
 
               <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-emerald-green text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">3</span>
-                  Create Personal Events
+                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2 uppercase">
+                  <Fuel className="text-amber-500 w-4 h-4" /> Fuel Scout
                 </h4>
-                <p className="text-sm">Use the <strong>"Your Special Events"</strong> search bar for private occasions. Type things like <em>"Wedding Gift for $100"</em>, <em>"15th Birthday party supplies"</em>, or <em>"Golden Anniversary"</em>. The AI Agent will analyze the event and give you tailored shopping advice.</p>
-              </div>
-            </div>
-
-            <h3 className="text-2xl font-semibold mt-8 mb-4 text-emerald-green border-b border-emerald-green/20 pb-2">Mastering Visual Intelligence (Camera & Video)</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-emerald-green text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">1</span>
-                  Photo Scan
-                </h4>
-                <p className="text-xs">Identify exact products from a friend's house or a store shelf.</p>
+                <p>Energy node monitor. Calibrates to local price nodes to isolate the lowest fuel costs currently available via your IP location.</p>
               </div>
 
               <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-pink-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">2</span>
-                  Style Advisor
+                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2 uppercase tracking-tighter">
+                  <Briefcase className="text-amber-600 w-4 h-4" /> Job Scout
                 </h4>
-                <p className="text-xs">Take a selfie for personalized <strong>Makeup (Pinturas), Clothing (Ropa), Jewelry (Joyería), Hair Styles (Cabello), and Nails (Manicure/Pedicure)</strong> matching.</p>
+                <p>Career intelligence system. Monitors global recruitment grids to secure high-value employment openings matching your skills.</p>
               </div>
 
               <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">3</span>
-                  Mechanic Scout
+                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2 uppercase tracking-tighter">
+                  <Car className="text-red-600 w-4 h-4" /> Mechanic Unit
                 </h4>
-                <p className="text-xs">Scan any vehicle part or engine. Versusfy identifies the issue and finds prices at <strong>AutoZone, Pep Boys, Advance Auto, and O'Reilly</strong>.</p>
+                <p>Diagnostic scanning tool for engine parts. Sources inventory from US auto chains at verified tactical rates instantly.</p>
               </div>
 
               <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-orange-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">4</span>
-                  Master Builder
+                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2 uppercase tracking-tighter">
+                  <Shirt className="text-pink-500 w-4 h-4" /> Style Scout
                 </h4>
-                <p className="text-xs">Perfect for project sites. Scan structures to identify phases, required materials (sand, cement, steel), and bulk pricing.</p>
-              </div>
-
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-blue-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">5</span>
-                  Space Scout
-                </h4>
-                <p className="text-xs">Scan a room or empty salon. Get <strong>Home Decor (Furniture/Paint)</strong> or <strong>Event Intel (Wedding/Quince años)</strong> tailored to your space.</p>
-              </div>
-
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-emerald-green text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">6</span>
-                  Gardening Scout
-                </h4>
-                <p className="text-xs">Identify plant species, health issues, and find fertilizers or irrigation tech specifically for your garden's status.</p>
-              </div>
-
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-emerald-green text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">7</span>
-                  Recipe Scout
-                </h4>
-                <p className="text-xs">Input any recipe and your budget. Versusfy calculates if it's feasible at <strong>Walmart</strong> and gives tips to save more.</p>
-              </div>
-
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-emerald-green text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">8</span>
-                  Pharmacy Scout
-                </h4>
-                <p className="text-xs">Scan pharma bottles or enter meds. Versusfy compares <strong>Walgreens, CVS, Walmart</strong>, and Amazon instantly.</p>
-              </div>
-
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-blue-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">9</span>
-                  Academic Master
-                </h4>
-                <p className="text-xs">From Kindergarten to University. Get <strong>homework help</strong>, simplify concepts, and compare <strong>school supplies, books, and tech</strong> with deals and coupons tracking.</p>
+                <p>Aesthetic DNA analyzer. Optimizes your visual presence by matching clothing and beauty products with retailer pricing.</p>
               </div>
             </div>
 
@@ -1451,107 +1401,41 @@ const ComparisonResultView = ({
               </div>
             </div>
 
-            <h3 className="text-2xl font-semibold mt-8 mb-4 text-emerald-green border-b border-emerald-green/20 pb-2">Mastering Hero Status & Community Rewards</h3>
-            <div className="space-y-6 mb-8">
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-emerald-green text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">!</span>
-                  Claim Your Hero Status
-                </h4>
-                <p className="text-sm">After a comparison, click the <strong>"Claim Hero Status & Share"</strong> button. This allows you to generate a professional, minimalist shopping "ticket" flyer that highlights the fortune you've helped save.</p>
-              </div>
+            <h3 className="text-2xl font-semibold mt-8 mb-4 text-emerald-green border-b border-emerald-green/20 pb-2">Omni-Assistant: The Supreme Interface</h3>
+            <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800 mb-8">
+              <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2 uppercase">
+                <Bot className="text-emerald-green" /> The Pulsating Sphere Protocol
+              </h4>
+              <p className="text-sm">Click the <strong>Pulsating Sphere</strong> (Red, White, and Green) in the bottom right corner to initialize your Supreme Interface. She is your tactical companion for vocal assistance, real-time translations, and providing expert shopping verdicts via Text-to-Speech across any domain.</p>
+            </div>
 
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-emerald-green text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">★</span>
-                  Personalize & Inspire
-                </h4>
-                <p className="text-sm">Upload your photo and enter your name to be featured as a <strong>"Hero Without a Cape."</strong> Share this elegance-focused flyer on your social networks to lead your family and friends towards financial freedom.</p>
+            <h3 className="text-2xl font-semibold mt-6 mb-3 text-neutral-900 dark:text-white uppercase text-lg border-b border-neutral-700 pb-2">Tactical Intelligence FAQ</h3>
+            <div className="space-y-4 text-sm">
+              <div>
+                <h4 className="font-bold text-neutral-900 dark:text-white uppercase text-xs">What is Versusfy Intelligence?</h4>
+                <p>Versusfy is a global AI intelligence network designed for extreme economic optimization and product analysis. We use specialized scouts to secure the best prices, coupons, and logistics data in real-time.</p>
               </div>
-
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-emerald-green text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">$</span>
-                  Win Surprise Prizes
-                </h4>
-                <p className="text-sm">Join our global movement of savers. The heroes who inspire the most people to save reach the top of our community tiers and become eligible for <strong>Mega Surprise Rewards</strong> and worldwide recognition.</p>
+              <div>
+                <h4 className="font-bold text-neutral-900 dark:text-white uppercase text-xs">Is my data secure?</h4>
+                <p>Yes. Our architecture is built with "Privacy by Design." We do not store personal search data or track your identities across nodes. Your strategic intent remains your own.</p>
+              </div>
+              <div>
+                <h4 className="font-bold text-neutral-900 dark:text-white uppercase text-xs">Can it compare everything?</h4>
+                <p>Yes. By activating <strong>Omni-Mode</strong>, our Titan-Class AI can analyze anything from medications (Pharmacy Scout) and apartments (Hogar Scout) to career paths (Job Scout) and construction projects (Master Builder).</p>
+              </div>
+              <div>
+                <h4 className="font-bold text-neutral-900 dark:text-white uppercase text-xs">How do I lead my community?</h4>
+                <p>Claim your <strong>Hero Status</strong> after any market victory. Share your Savings Ticket flyer to inspire others to mobilize for financial freedom and reach elite community tiers.</p>
               </div>
             </div>
 
-            <h3 className="text-2xl font-semibold mt-6 mb-3 text-neutral-900 dark:text-white">FAQ</h3>
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-semibold text-neutral-900 dark:text-white">What is "Hero Status"?</h4>
-                <p>Hero Status is our recognition for users who help others save. By claiming your status, you generate a "Gold Ticket" flyer that you can share with family and friends. It makes you the savior of their wallets and qualifies you for exclusive community prizes.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-neutral-900 dark:text-white">What is Versusfy?</h4>
-                <p>Versusfy is a minimalist, futuristic product comparison engine designed to help you make informed purchasing decisions quickly and easily.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-neutral-900 dark:text-white">Can I use Versusfy in a physical store?</h4>
-                <p>Absolutely. Versusfy is designed for real-time field intelligence. Use the <strong>Visual Search</strong> camera to scan products on shelves. Our AI will instantly find better prices online or in other local stores, ensuring you never overpay while shopping in the real world.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-neutral-900 dark:text-white">Can I compare sports teams or athletes?</h4>
-                <p>Yes, by activating <strong>Omni-Mode</strong> (the floating wand button), you can compare athletes like Canelo vs Mayweather or teams like Real Madrid vs Barcelona. Versusfy will analyze stats, history, and performance metrics.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-neutral-900 dark:text-white">Can I compare Influencers and Social Networks?</h4>
-                <p>Yes. By activating <strong>Omni-Mode</strong>, you can compare Influencers (e.g., MrBeast vs PewDiePie) by their career trajectory, engagement rates, and followers. You can also compare platforms like TikTok vs Instagram to see which offers better monetization or reach.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-neutral-900 dark:text-white">Is it possible to compare AI Models from different countries?</h4>
-                <p>Absolutely. Versusfy can compare global Large Language Models (LLMs) like Gemini, ChatGPT, Claude, and even models from other countries like DeepSeek. It analyzes performance benchmarks, specialized capabilities, and country of origin to give you a technical verdict.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-neutral-900 dark:text-white">Is it possible to compare currencies, animals, and health?</h4>
-                <p>Absolutely. Omni-Mode allows you to compare global markets, Fiat vs Cryptocurrencies, animal breeds, and even foods, drinks, or medications. For health-related queries, Versusfy uses established scientific research data to compare active ingredients and nutritional impacts, always providing a smart product suggestion (like a pill organizer or specialized food container) to complement your search.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-neutral-900 dark:text-white">Can I compare actors and artists?</h4>
-                <p>Yes. You can compare any two performers (e.g., Tom Cruise vs Brad Pitt) by their trajectory, awards, genres, and social media popularity. Versusfy will even suggest authentic merchandise or their top-rated film collections as a smart shopping link.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-neutral-900 dark:text-white">Why use Omni-Mode instead of the standard scan?</h4>
-                <p>Standard mode is optimized for physical products and online shopping deals. <strong>Omni-Mode</strong> unlocks the AI's full analytical power for abstract concepts, global markets, and professional statistics that don't have a simple "buy" button.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-neutral-900 dark:text-white">Is Versusfy free to use?</h4>
-                <p>Yes, Versusfy is completely free to use.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-neutral-900 dark:text-white">Can Versusfy help me find a home or apartment?</h4>
-                <p>Yes. Our <strong>Housing Search</strong> tool is designed specifically for families in the USA. It filters listings for rent or sale based on your budget and city, providing direct contact information (phone and email) of the renter or seller, and integrates with Google Maps for easy location tracking.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-neutral-900 dark:text-white">How does the Fuel Scout help me save money?</h4>
-                <p>The <strong>Fuel Scout</strong> audits gas station prices in your specific city or zip code in real-time. It identifies the cheapest fuels (Regular, Premium, Diesel) and provides direct GPS links so you can navigate to the station with the lowest prices immediately, saving you money on every fill-up.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-neutral-900 dark:text-white">Can Water Guardian really reduce my water bill?</h4>
-                <p>Absolutely. By uploading a photo of your bill, the <strong>Water Guardian</strong> identifies patterns that usually go unnoticed. It provides practical, high-impact strategies specifically for your level of consumption, helping you save dozens of dollars every month by optimizing your home's hydraulic usage.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-neutral-900 dark:text-white">Is Gas Master effective for cooking gas?</h4>
-                <p>Yes. <strong>Gas Master</strong> is designed to analyze both natural gas bills and cooking patterns. It provides tactical advice on thermal retention and heat management that can reduce your cooking gas consumption by up to 20-30%, resulting in immediate savings for your household budget.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-neutral-900 dark:text-white">What is the Omni-Assistant?</h4>
-                <p>The <strong>Omni-Assistant</strong> is your personal AI companion represented by the pulsating sphere. She can talk, listen to your voice commands, and perform complex comparisons across any domain. She is designed to be your constant advisor in the Versusfy ecosystem.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-neutral-900 dark:text-white">What exactly can Omni-Mode compare?</h4>
-                <p>Absolutely everything. Beyond products, you can compare <strong>Instruments, Musical Groups, Cars, Motos, Bicycles, Animals, Insects, Restaurants, Pharmacies, Systems (Irrigation/Gardening), Tools, Sound Systems, Countries, Cities</strong> (analyzing risks and opportunities), <strong>Religions, Diseases, Flights, and Rents</strong>. It even handles abstract comparisons like <strong>Physics vs Quantum Physics, Intelligence vs Wisdom</strong>, or <strong>Entrepreneur vs Banker</strong>. Special categories like <strong>Academic Topics, Pharmacy & Medication, Jewelry (Joyería), Video Games, and Toys</strong> have dedicated tactical filters.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-neutral-900 dark:text-white">How do you compare products?</h4>
-                <p>We use advanced AI models to analyze product features, specifications, and pricing data from multiple retailers to provide you with a comprehensive comparison.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-neutral-900 dark:text-white">Is my data safe?</h4>
-                <p>Yes. Versusfy is built with a "Privacy by Design" approach. We do not store your search queries or personal information.</p>
-              </div>
+            <div className="mt-8 pt-6 border-t border-neutral-200 dark:border-neutral-700 text-center">
+              <button 
+                onClick={() => setView('home')} 
+                className="bg-emerald-green hover:bg-emerald-600 text-white font-black py-4 px-10 rounded-full transition-all uppercase tracking-[0.2em] text-[10px] shadow-xl shadow-emerald-green/20"
+              >
+                Return to Command Center
+              </button>
             </div>
           </motion.div>
         );
@@ -2697,6 +2581,72 @@ const ComparisonResultView = ({
             <GasMaster onClose={() => setView('home')} userName={heroName} />
           </motion.div>
         );
+      case 'jobs':
+        return (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-4xl mx-auto pb-20 px-4"
+          >
+             <div className="flex justify-start mb-6">
+              <button 
+                onClick={() => setView('home')}
+                className="p-3 bg-white dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg border border-neutral-200 dark:border-neutral-700"
+              >
+                <X size={20} /> Close Unit
+              </button>
+            </div>
+            <JobScout 
+              isOpen={true} 
+              onClose={() => setView('home')} 
+              detectedCity={detectedCity || undefined} 
+              userName={heroName || undefined} 
+            />
+          </motion.div>
+        );
+      case 'pathfinder':
+        return (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-7xl mx-auto pb-20 px-4"
+          >
+             <div className="flex justify-start mb-6">
+              <button 
+                onClick={() => setView('home')}
+                className="p-3 bg-white dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg border border-neutral-200 dark:border-neutral-700"
+              >
+                <X size={20} /> Close Unit
+              </button>
+            </div>
+            <PathfinderIntelligence 
+              onClose={() => setView('home')} 
+              detectedCity={detectedCity || undefined} 
+              userName={heroName || undefined} 
+            />
+          </motion.div>
+        );
+      case 'coupons':
+        return (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-7xl mx-auto pb-20 px-4"
+          >
+             <div className="flex justify-start mb-6">
+              <button 
+                onClick={() => setView('home')}
+                className="p-3 bg-white dark:bg-neutral-800 rounded-2xl text-neutral-500 hover:text-red-500 transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg border border-neutral-200 dark:border-neutral-700"
+              >
+                <X size={20} /> Close Unit
+              </button>
+            </div>
+            <CouponScout 
+              onClose={() => setView('home')} 
+              userName={heroName || undefined} 
+            />
+          </motion.div>
+        );
       default:
         return (
           <>
@@ -3093,6 +3043,9 @@ const ComparisonResultView = ({
                   { view: 'fuel', label: 'Fuel Scout', icon: Fuel, color: 'text-amber-500', bg: 'hover:bg-amber-500/5', category: 'Home' },
                   { view: 'water', label: 'Water Guardian', icon: Droplets, color: 'text-blue-500', bg: 'hover:bg-blue-500/5', category: 'Home' },
                   { view: 'gas', label: 'Gas Master', icon: Flame, color: 'text-orange-500', bg: 'hover:bg-orange-500/5', category: 'Home' },
+                  { view: 'jobs', label: 'Job Scout', icon: Briefcase, color: 'text-blue-500', bg: 'hover:bg-blue-500/5', category: 'Tech' },
+                  { view: 'pathfinder', label: 'Pathfinder Intelligence', icon: Navigation, color: 'text-red-500', bg: 'hover:bg-red-500/5', category: 'Tech' },
+                  { view: 'coupons', label: 'Coupon Scout', icon: Ticket, color: 'text-emerald-500', bg: 'hover:bg-emerald-500/5', category: 'Sale' },
                 ].filter(agent => agentFilter === 'All' || agent.category === agentFilter).map((agent: any) => (
                    <button
                       key={agent.view}
@@ -3298,7 +3251,7 @@ const ComparisonResultView = ({
         onClose={() => { 
           setIsVisualSearchOpen(false); 
           // Only clear if not in a scout view
-          if (!['fuel', 'pharmacy', 'gardening', 'mechanic', 'construction', 'style-advisor', 'offices'].includes(view)) {
+          if (!['fuel', 'pharmacy', 'gardening', 'mechanic', 'construction', 'style-advisor', 'offices', 'pathfinder'].includes(view)) {
             setSelectedAgentMode(undefined); 
           }
         }}
@@ -3315,7 +3268,7 @@ const ComparisonResultView = ({
         onClose={() => { 
           setIsAssistantOpen(false); 
           setAutoAssistantListen(false); 
-          if (!['fuel', 'pharmacy', 'gardening', 'mechanic', 'construction', 'style-advisor', 'offices'].includes(view)) {
+          if (!['fuel', 'pharmacy', 'gardening', 'mechanic', 'construction', 'style-advisor', 'offices', 'pathfinder'].includes(view)) {
             setSelectedAgentMode(undefined); 
           }
         }}
@@ -3352,7 +3305,10 @@ const ComparisonResultView = ({
              else if (view === 'video-games') setSelectedAgentMode('gamer');
              else if (view === 'academic') setSelectedAgentMode('academic');
              else if (view === 'musical') setSelectedAgentMode('musical');
+             else if (view === 'jobs') setSelectedAgentMode('job');
              else if (view === 'electrician') setSelectedAgentMode('energy');
+             else if (view === 'pathfinder') setSelectedAgentMode('pathfinder');
+             else if (view === 'coupons') setSelectedAgentMode('coupon');
           }
           
           setIsAssistantOpen(true);

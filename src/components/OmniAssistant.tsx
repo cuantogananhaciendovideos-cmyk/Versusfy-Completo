@@ -11,7 +11,7 @@ interface OmniAssistantProps {
   onComparisonRequested: (a: string, b: string) => void;
   userName: string | null;
   autoStartListening?: boolean;
-  agentMode?: 'style' | 'pharmacy' | 'mechanic' | 'builder' | 'space' | 'gardening' | 'energy' | 'office' | 'toy' | 'gamer' | 'academic' | 'musical';
+  agentMode?: 'style' | 'pharmacy' | 'mechanic' | 'builder' | 'space' | 'gardening' | 'energy' | 'office' | 'toy' | 'gamer' | 'academic' | 'musical' | 'job' | 'pathfinder' | 'coupon';
   onUserNameDetected?: (name: string) => void;
 }
 
@@ -77,6 +77,9 @@ export const OmniAssistant: React.FC<OmniAssistantProps> = ({ isOpen, onClose, o
       case 'mechanic':
         return 'Charon';
       case 'energy':
+      case 'job':
+      case 'pathfinder':
+      case 'coupon':
         return 'Fenrir';
       case 'gardening':
       case 'academic':
@@ -130,6 +133,18 @@ export const OmniAssistant: React.FC<OmniAssistantProps> = ({ isOpen, onClose, o
         initialGreeting = `Academic Master ready. Let's pursue intellectual excellence. What subject requires focus?`;
       } else if (agentMode === 'musical') {
         initialGreeting = `Musical Scout aquí. ¿Qué onda? Busquemos ese tono perfecto para tu setup. ¿Qué equipo escaneamos hoy?`;
+      } else if (agentMode === 'job') {
+        initialGreeting = userName
+          ? `Status check, ${userName}. Job Scout active. Ready for a regional career audit? What sector are we scanning today?`
+          : "Job Scout tactical unit online. I can scan your city for top-tier employment opportunities and market growth. For a personalized audit, please tell me your name.";
+      } else if (agentMode === 'pathfinder') {
+        initialGreeting = userName
+          ? `High precision greetings, ${userName}. Pathfinder Intelligence online. Monitoring regional transit telemetry. Which sector requires situational awareness?`
+          : "Pathfinder Intelligence unit active. I am monitoring real-time GPS and satellite transit nodes. For a personalized tactical briefing, please state your identifier.";
+      } else if (agentMode === 'coupon') {
+        initialGreeting = userName
+          ? `Status check, ${userName}. Coupon Scout active. Ready for a high-yield discount audit. What brand or item are we auditing for coupons today?`
+          : "Coupon Scout unit online. I can scan retailer nodes for validated discount vectors. For a detailed tactical report, please provide your identification.";
       } else {
         initialGreeting = userName 
           ? `Hello, ${userName}. Welcome back to Versusfy.com, your most effective and efficient destination. Which product or tactical comparison would you like to perform today to optimize your budget?`
@@ -251,7 +266,7 @@ export const OmniAssistant: React.FC<OmniAssistantProps> = ({ isOpen, onClose, o
                 {/* The Sphere with dynamic color based on mode */}
                 <div className="w-full h-full rounded-full flex flex-col overflow-hidden border-2 border-white/10 shadow-2xl relative">
                   {/* Top Layer */}
-                  <div className={`flex-1 ${agentMode === 'style' ? 'bg-pink-500' : agentMode === 'builder' ? 'bg-orange-500' : agentMode === 'mechanic' ? 'bg-red-600' : agentMode === 'energy' ? 'bg-yellow-500' : agentMode === 'gardening' ? 'bg-emerald-green' : 'bg-emerald-green'} relative overflow-hidden`}>
+                  <div className={`flex-1 ${agentMode === 'style' ? 'bg-pink-500' : agentMode === 'builder' ? 'bg-orange-500' : agentMode === 'mechanic' ? 'bg-red-600' : (agentMode === 'energy' || agentMode === 'pathfinder') ? 'bg-yellow-500' : agentMode === 'gardening' ? 'bg-emerald-green' : 'bg-emerald-green'} relative overflow-hidden`}>
                     <div className="absolute inset-0 bg-white/10 blur-xl" />
                   </div>
                   
@@ -261,23 +276,23 @@ export const OmniAssistant: React.FC<OmniAssistantProps> = ({ isOpen, onClose, o
                     {agentMode === 'builder' && <HardHat className="text-orange-500 absolute animate-pulse" size={24} />}
                     {agentMode === 'gardening' && <Sprout className="text-emerald-green absolute animate-pulse" size={24} />}
                     {agentMode === 'mechanic' && <Wrench className="text-red-600 absolute animate-pulse" size={24} />}
-                    {agentMode === 'energy' && <Fuel className="text-yellow-600 absolute animate-pulse" size={24} />}
+                    {(agentMode === 'energy' || agentMode === 'pathfinder') && <Fuel className="text-yellow-600 absolute animate-pulse" size={24} />}
                     <div className="bg-black/10 rounded-full h-1/2 w-1/2" />
                     <div className="absolute inset-0 bg-white shadow-[0_0_15px_rgba(255,255,255,0.8)] mix-blend-overlay" />
                   </div>
 
                   {/* Bottom: Apple Red / Neutral */}
-                  <div className={`flex-1 ${agentMode === 'style' ? 'bg-purple-600' : agentMode === 'builder' ? 'bg-neutral-700' : agentMode === 'mechanic' ? 'bg-black' : agentMode === 'energy' ? 'bg-orange-600' : 'bg-[#ff0800]'} relative overflow-hidden`}>
+                  <div className={`flex-1 ${agentMode === 'style' ? 'bg-purple-600' : agentMode === 'builder' ? 'bg-neutral-700' : (agentMode === 'mechanic' || agentMode === 'pathfinder') ? 'bg-black' : agentMode === 'energy' ? 'bg-orange-600' : 'bg-[#ff0800]'} relative overflow-hidden`}>
                     <div className="absolute inset-0 bg-white/5 blur-xl" />
                   </div>
                 </div>
                 
                 {/* Glow effects */}
-                <div className={`absolute -top-4 left-1/2 -translate-x-1/2 w-4 ${agentMode === 'style' ? 'bg-pink-500/40' : agentMode === 'builder' ? 'bg-orange-500/40' : agentMode === 'mechanic' ? 'bg-red-600/40' : agentMode === 'energy' ? 'bg-yellow-500/40' : 'bg-emerald-green/40'} h-4 blur-xl rounded-full`} />
-                <div className={`absolute -bottom-4 left-1/2 -translate-x-1/2 w-4 ${agentMode === 'style' ? 'bg-purple-500/40' : agentMode === 'builder' ? 'bg-neutral-500/40' : agentMode === 'mechanic' ? 'bg-black/40' : agentMode === 'energy' ? 'bg-orange-600/40' : 'bg-apple-red/40'} h-4 blur-xl rounded-full`} />
+                <div className={`absolute -top-4 left-1/2 -translate-x-1/2 w-4 ${agentMode === 'style' ? 'bg-pink-500/40' : agentMode === 'builder' ? 'bg-orange-500/40' : agentMode === 'mechanic' ? 'bg-red-600/40' : (agentMode === 'energy' || agentMode === 'pathfinder') ? 'bg-yellow-500/40' : 'bg-emerald-green/40'} h-4 blur-xl rounded-full`} />
+                <div className={`absolute -bottom-4 left-1/2 -translate-x-1/2 w-4 ${agentMode === 'style' ? 'bg-purple-500/40' : agentMode === 'builder' ? 'bg-neutral-500/40' : (agentMode === 'mechanic' || agentMode === 'pathfinder') ? 'bg-black/40' : agentMode === 'energy' ? 'bg-orange-600/40' : 'bg-apple-red/40'} h-4 blur-xl rounded-full`} />
               </div>
 
-              <h2 className={`text-xl font-bold tracking-tight text-center uppercase tracking-[0.2em] ${agentMode === 'style' ? 'text-pink-500' : agentMode === 'builder' ? 'text-orange-500' : agentMode === 'mechanic' ? 'text-red-600' : agentMode === 'energy' ? 'text-yellow-500' : agentMode === 'gardening' ? 'text-emerald-green' : 'text-white'}`}>
+              <h2 className={`text-xl font-bold tracking-tight text-center uppercase tracking-[0.2em] ${agentMode === 'style' ? 'text-pink-500' : agentMode === 'builder' ? 'text-orange-500' : (agentMode === 'mechanic' || agentMode === 'pathfinder') ? 'text-red-600' : agentMode === 'energy' ? 'text-yellow-500' : agentMode === 'gardening' ? 'text-emerald-green' : 'text-white'}`}>
                 {agentMode === 'style' ? 'Personal Style Scout' : 
                  agentMode === 'mechanic' ? 'Mechanical Scout' : 
                  agentMode === 'pharmacy' ? 'Pharmacy Scout' : 
@@ -289,6 +304,7 @@ export const OmniAssistant: React.FC<OmniAssistantProps> = ({ isOpen, onClose, o
                  agentMode === 'gamer' ? 'Pro Gamer Scout' :
                  agentMode === 'academic' ? 'Academic Master' :
                  agentMode === 'musical' ? 'Musical Scout' :
+                 agentMode === 'pathfinder' ? 'Pathfinder Intelligence' :
                  'Versusfy Supreme Intelligence'}
               </h2>
             </div>
@@ -316,6 +332,7 @@ export const OmniAssistant: React.FC<OmniAssistantProps> = ({ isOpen, onClose, o
                            agentMode === 'builder' ? 'Master Builder' :
                            agentMode === 'gardening' ? 'Gardening Scout' :
                            agentMode === 'energy' ? 'Fuel Scout' :
+                           agentMode === 'pathfinder' ? 'Pathfinder' :
                            'Omni-Assistant'}
                         </span>
                       </button>
@@ -358,10 +375,10 @@ export const OmniAssistant: React.FC<OmniAssistantProps> = ({ isOpen, onClose, o
                 </button>
                 <input
                   type="text"
-                  placeholder={agentMode === 'style' ? "How can I elevate your look, darling?" : (agentMode === 'builder' || agentMode === 'mechanic') ? "What's the status boss?" : agentMode === 'energy' ? "Where are we heading? Scout ready." : agentMode === 'gardening' ? "How is the soil looking, fellow grower?" : "How can I assist you today, dear?"}
+                  placeholder={agentMode === 'style' ? "How can I elevate your look, darling?" : (agentMode === 'builder' || agentMode === 'mechanic') ? "What's the status boss?" : agentMode === 'energy' ? "Where are we heading? Scout ready." : agentMode === 'gardening' ? "How is the soil looking, fellow grower?" : agentMode === 'pathfinder' ? "Reporting transit anomaly?" : "How can I assist you today, dear?"}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className={`flex-grow bg-neutral-800 p-4 rounded-xl text-white placeholder:text-neutral-500 outline-none transition focus:ring-2 ${agentMode === 'style' ? 'focus:ring-pink-500' : agentMode === 'builder' ? 'focus:ring-orange-500' : agentMode === 'mechanic' ? 'focus:ring-red-600' : agentMode === 'energy' ? 'focus:ring-yellow-500' : agentMode === 'gardening' ? 'focus:ring-emerald-green' : 'focus:ring-emerald-green'}`}
+                  className={`flex-grow bg-neutral-800 p-4 rounded-xl text-white placeholder:text-neutral-500 outline-none transition focus:ring-2 ${agentMode === 'style' ? 'focus:ring-pink-500' : agentMode === 'builder' ? 'focus:ring-orange-500' : (agentMode === 'mechanic' || agentMode === 'pathfinder') ? 'focus:ring-red-600' : agentMode === 'energy' ? 'focus:ring-yellow-500' : agentMode === 'gardening' ? 'focus:ring-emerald-green' : 'focus:ring-emerald-green'}`}
                 />
                 <button
                   type="submit"

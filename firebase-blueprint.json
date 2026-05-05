@@ -1,0 +1,35 @@
+{
+  "entities": {
+    "PathfinderVote": {
+      "title": "Pathfinder Vote",
+      "description": "User votes for the Pathfinder Intelligence agent",
+      "type": "object",
+      "properties": {
+        "vote": { "type": "string", "enum": ["up", "down"] },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" }
+      },
+      "required": ["vote", "timestamp"]
+    },
+    "AgentStats": {
+      "title": "Agent Stats",
+      "description": "Aggregated stats for agents",
+      "type": "object",
+      "properties": {
+        "upVotes": { "type": "integer" },
+        "downVotes": { "type": "integer" },
+        "totalVotes": { "type": "integer" }
+      }
+    }
+  },
+  "firestore": {
+    "pathfinder_votes": {
+      "schema": "PathfinderVote",
+      "description": "Individual votes for Pathfinder agent"
+    },
+    "stats/pathfinder": {
+      "schema": "AgentStats",
+      "description": "Aggregated stats for Pathfinder agent"
+    }
+  }
+}

@@ -85,5 +85,14 @@ service cloud.firestore {
     match /coupons/{couponId} {
       allow read, write: if true;
     }
+
+    // Pathfinder Voting
+    match /pathfinder_votes/{voteId} {
+      allow read, create: if true;
+    }
+
+    match /stats/{statId} {
+      allow read, write: if true;
+    }
   }
 }
