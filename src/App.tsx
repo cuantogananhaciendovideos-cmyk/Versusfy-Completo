@@ -17,7 +17,7 @@ import { searchGuitarCenterProducts } from './services/guitarcenterService';
 import { searchSweetwaterProducts } from './services/sweetwaterService';
 import { searchMusiciansFriendProducts } from './services/musiciansfriendService';
 import { searchSamAshProducts } from './services/samashService';
-import { Search, Loader2, Info, ShieldCheck, ShieldAlert, Home, Mail, Sun, Moon, RotateCcw, Facebook, Instagram, Twitter, MessageCircle, AtSign, HelpCircle, Users, Clock, Calendar, Globe, Share2, QrCode, Ticket, TrendingDown, Mic, Volume2, VolumeX, ShoppingBag, Calculator, MapPin, Cloud, Sparkles, Zap, CheckCircle2, XCircle, BarChart3, Wand2, Trophy, Coins, Activity, ShieldPlus, Brain, Layout, Utensils, Code, Sprout, Palette, Shovel, Wrench, HardHat, Briefcase, Droplets, Lightbulb, Gamepad2, ChevronDown, Bot, ToyBrick, Rocket, Shirt, Gem, Footprints, Scissors, Brush, Pill, GraduationCap, BookOpen, Car, Music, Headphones, Building2, Fuel, X, Navigation } from 'lucide-react';
+import { Search, Loader2, Info, ShieldCheck, ShieldAlert, Home, Mail, Sun, Moon, RotateCcw, Facebook, Instagram, Twitter, MessageCircle, AtSign, HelpCircle, Users, Clock, Calendar, Globe, Share2, QrCode, Ticket, TrendingDown, Mic, Volume2, VolumeX, ShoppingBag, Calculator, MapPin, Cloud, Sparkles, Zap, CheckCircle2, XCircle, BarChart3, Wand2, Trophy, Coins, Activity, ShieldPlus, Brain, Layout, Utensils, Code, Sprout, Palette, Shovel, Wrench, HardHat, Briefcase, Droplets, Lightbulb, Gamepad2, ChevronDown, Bot, ToyBrick, Rocket, Shirt, Gem, Footprints, Scissors, Brush, Pill, GraduationCap, BookOpen, Car, Music, Headphones, Building2, Fuel, X, Navigation, Hammer, Wind } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import confetti from 'canvas-confetti';
@@ -309,7 +309,7 @@ const ComparisonResultView = ({
     >
       {/* Versusfy Precision Index Breakdown */}
       {comparison.index && (
-        <div className="bg-neutral-900 border-t border-b border-neutral-800 p-8 space-y-6">
+        <div className="bg-neutral-900 border-t border-b border-neutral-800 p-4 sm:p-8 space-y-6">
           <h3 className="text-[10px] uppercase tracking-[0.4em] font-black text-emerald-green text-center">Versusfy Precision Index Breakdown</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {Object.entries(comparison.index).map(([key, scores]: any) => (
@@ -337,7 +337,7 @@ const ComparisonResultView = ({
       )}
 
       {/* Comparison Top - Versus Style */}
-      <div className="bg-neutral-50 dark:bg-neutral-800/50 p-8 border-b border-neutral-200 dark:border-neutral-800">
+      <div className="bg-neutral-50 dark:bg-neutral-800/50 p-4 sm:p-8 border-b border-neutral-200 dark:border-neutral-800">
         <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-8">
           <div className="flex-1 text-center">
             <h2 className="text-2xl font-black text-neutral-900 dark:text-white mb-2">{productA}</h2>
@@ -395,7 +395,7 @@ const ComparisonResultView = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-3">
         {/* Left Column: Specs & Sources */}
-        <div className="lg:col-span-2 p-8 border-r border-neutral-100 dark:border-neutral-800">
+        <div className="lg:col-span-2 p-4 sm:p-8 border-r border-neutral-100 dark:border-neutral-800">
           <h3 className="text-[10px] uppercase tracking-[0.3em] font-black text-neutral-400 mb-6 text-center">Technical Specifications Comparison</h3>
             <div className="space-y-3 mb-12 px-0 md:px-4">
               {comparison.table?.map((row: any, i: number) => (
@@ -539,7 +539,7 @@ const ComparisonResultView = ({
         </div>
 
         {/* Right Column: Marketing & Gated Offers */}
-        <div className="bg-neutral-50 dark:bg-neutral-950 p-8 space-y-8">
+        <div className="bg-neutral-50 dark:bg-neutral-950 p-4 sm:p-8 space-y-8">
           <AnimatePresence mode="wait">
             {!dealsUnlocked ? (
               <motion.div 
@@ -617,7 +617,7 @@ const ComparisonResultView = ({
       </div>
 
       {/* Bottom Tools */}
-      <div id="trackers-section" className="p-8 bg-neutral-50 dark:bg-neutral-900/50 border-t border-neutral-100 dark:border-neutral-800">
+      <div id="trackers-section" className="p-4 sm:p-8 bg-neutral-50 dark:bg-neutral-900/50 border-t border-neutral-100 dark:border-neutral-800">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
           <PriceTracker productName={productA} currentPrice={199.99} />
           <CouponTracker productName={productA} />
@@ -1037,114 +1037,49 @@ const ComparisonResultView = ({
     switch (view) {
       case 'about':
         return (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-4xl bg-white dark:bg-neutral-900 p-8 rounded-2xl border border-neutral-200 dark:border-neutral-800">
-            <h2 className="text-4xl font-bold mb-6 text-emerald-green">About Versusfy Intelligence Network</h2>
-            <div className="space-y-6 text-neutral-600 dark:text-neutral-300">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-4xl bg-white dark:bg-neutral-900 p-4 sm:p-8 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-2xl mx-auto">
+            <h2 className="text-3xl sm:text-5xl font-black mb-6 text-emerald-green uppercase tracking-tighter italic leading-tight">Versusfy Intelligence Network</h2>
+            <div className="space-y-6 text-neutral-600 dark:text-neutral-300 text-sm sm:text-base leading-relaxed">
               <p>
-                Welcome to <strong>Versusfy</strong>, the ultimate global intelligence network for product analysis, market dominance, and extreme economic optimization. In a world of infinite choices and hidden costs, Versusfy operates as your supreme tactical command, mobilizing a fleet of specialized AI Scouts to secure your financial and strategic advantage.
+                Welcome to <strong className="text-neutral-900 dark:text-white uppercase italic tracking-tighter">Versusfy</strong>, the planet's premier tactical AI command for economic optimization. We empower consumers with military-grade market intelligence to secure the absolute lowest price points across the global grid.
               </p>
               <p>
-                Our infrastructure is powered by <strong>Titan-Class Generative AI</strong> that synchronizes real-time data from the world's most powerful retail nodes, including <strong>Amazon, Walmart, eBay, The Home Depot, Best Buy, and Guitar Center</strong>. We don't just compare; we audit the entire global marketplace to ensure you never pay a cent more than necessary.
+                Synchronizing with retail giants like <strong>Amazon, Walmart, Best Buy, eBay, Home Depot</strong>, and <strong>Guitar Center</strong>, our Titan-Class AI audits millions of product vectors to eliminate overpayment.
               </p>
-              <h3 className="text-2xl font-semibold text-neutral-900 dark:text-white">The Versusfy Doctrine</h3>
+              <h3 className="text-xl sm:text-2xl font-black text-neutral-900 dark:text-white uppercase tracking-tight italic border-b border-neutral-100 dark:border-neutral-800 pb-2">The Versusfy Doctrine</h3>
               <p>
-                Our philosophy is simple: <strong>Total Market Visibility.</strong> We believe that predictive intelligence should be available to every consumer. Whether you are buying a smartphone, auditing your monthly utility bills, or searching for tactical career growth, Versusfy provides the objective, data-driven edge required to triumph in today's economy.
+                Our mission is <strong>Total Price Neutralization.</strong> We provide the objective data required to win every financial showdown, from household groceries to construction material phases.
               </p>
-              <h3 className="text-2xl font-semibold text-neutral-900 dark:text-white">Why Mobilize with Versusfy?</h3>
-              <ul className="list-disc list-inside space-y-2">
-                <li><strong>Multi-Agent Intelligence:</strong> A specialized scout for every domain of your life, from mechanics to fashion.</li>
-                <li><strong>Tactical Coupon Auditing:</strong> Automated sensors that isolate the highest-yield discount nodes in real-time.</li>
-                <li><strong>Situational Awareness:</strong> Real-time GPS and traffic intelligence via the Pathfinder unit.</li>
-                <li><strong>Visual Intelligence:</strong> Camera-based scanning for instant product IDs and diagnostics.</li>
-                <li><strong>Privacy by Design:</strong> High-level encryption and anonymous processing to protect your strategic intent.</li>
-                <li><strong>GEO-Targeted Logistics:</strong> Localized price audits specifically calibrated to your current coordinates.</li>
-              </ul>
               
-              <div className="bg-purple-500/5 p-6 rounded-2xl border border-purple-500/20 mt-8">
-                <h4 className="font-bold text-purple-600 dark:text-purple-400 mb-3 text-lg italic uppercase">The Tactical Intelligence Fleet</h4>
-                <p className="text-sm mb-4">Our specialized Operational Units are strictly integrated with the Tactical Affiliate Network:</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-emerald-green text-[10px] uppercase mb-1">● Omni-Assistant (Supreme Command)</h5>
-                    <p className="text-[10px]">The voice-activated interface. Manages the entire network, providing real-time market duels and summarized reports.</p>
+              <div className="bg-emerald-green/5 p-4 sm:p-8 rounded-3xl border border-emerald-green/20">
+                <h4 className="font-extrabold text-emerald-green mb-6 text-xs sm:text-sm uppercase tracking-widest italic border-b border-emerald-green/10 pb-2">Operational Intelligence Fleet</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-white/40 dark:bg-neutral-800/40 p-4 rounded-xl border border-neutral-100 dark:border-neutral-700">
+                    <h5 className="font-black text-emerald-green text-[10px] uppercase mb-1 flex items-center gap-2"><Zap size={10} /> Omni-Assistant</h5>
+                    <p className="text-[9px] leading-tight">Supreme vocal interface. Decides market winners via real-time spec duels and price tracking.</p>
                   </div>
-                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-blue-500 text-[10px] uppercase mb-1">● Coupon Scout (Discount Auditor)</h5>
-                    <p className="text-[10px]">Strictly audits for <strong>high-yield coupons and promo codes</strong>. Secures verified discount nodes for every product.</p>
+                  <div className="bg-white/40 dark:bg-neutral-800/40 p-4 rounded-xl border border-neutral-100 dark:border-neutral-700">
+                    <h5 className="font-black text-blue-500 text-[10px] uppercase mb-1 flex items-center gap-2"><Ticket size={10} /> Coupon Scout</h5>
+                    <p className="text-[9px] leading-tight">High-yield discount auditor. Secures negotiated promo codes and verified retailer coupons.</p>
                   </div>
-                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-orange-500 text-[10px] uppercase mb-1">● Pathfinder Intelligence (GPS Ops)</h5>
-                    <p className="text-[10px]">Real-time <strong>traffic situational awareness</strong>. Optimizes your logistics and fuel-saving vectors globally.</p>
+                  <div className="bg-white/40 dark:bg-neutral-800/40 p-4 rounded-xl border border-neutral-100 dark:border-neutral-700">
+                    <h5 className="font-black text-orange-500 text-[10px] uppercase mb-1 flex items-center gap-2"><Navigation size={10} /> Pathfinder (GPS)</h5>
+                    <p className="text-[9px] leading-tight text-red-500 font-bold uppercase tracking-tighter">Tactical Deployment Stage (Vote Now!)</p>
                   </div>
-                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-amber-600 text-[10px] uppercase mb-1">● Job Scout (Career Intel)</h5>
-                    <p className="text-[10px]">Strategic recruitment intelligence. Monitors global hiring nodes to secure your next market victory.</p>
+                  <div className="bg-white/40 dark:bg-neutral-800/40 p-4 rounded-xl border border-neutral-100 dark:border-neutral-700">
+                    <h5 className="font-black text-amber-500 text-[10px] uppercase mb-1 flex items-center gap-2"><Fuel size={10} /> Fuel/Energy Scout</h5>
+                    <p className="text-[9px] leading-tight">Monitors gasoline and utility nodes. Calibrates household spending for maximum efficiency.</p>
                   </div>
-                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-pink-500 text-[10px] uppercase mb-1">● Style Scout (Personal Advisor)</h5>
-                    <p className="text-[10px]">Analyzes visual DNA to optimize makeup, clothing, and hair matching with retailer-direct pricing.</p>
+                  <div className="bg-white/40 dark:bg-neutral-800/40 p-4 rounded-xl border border-neutral-100 dark:border-neutral-700">
+                    <h5 className="font-black text-teal-600 text-[10px] uppercase mb-1 flex items-center gap-2"><Droplets size={10} /> Recipe & Water Units</h5>
+                    <p className="text-[9px] leading-tight">Analyzes water quality nodes and optimizes nutritional budgets via budget-based meal protocols.</p>
                   </div>
-                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-red-600 text-[10px] uppercase mb-1">● Mechanical Scout (Vehicle Unit)</h5>
-                    <p className="text-[10px]">Diagnostic scans for engine parts and fault codes. Sources inventory from major US auto chains instantly.</p>
+                  <div className="bg-white/40 dark:bg-neutral-800/40 p-4 rounded-xl border border-neutral-100 dark:border-neutral-700">
+                    <h5 className="font-black text-red-600 text-[10px] uppercase mb-1 flex items-center gap-2"><Hammer size={10} /> Builder & Mechanic</h5>
+                    <p className="text-[9px] leading-tight">Diagnostic scans for engine faults and construction material volume phases at bulk rates.</p>
                   </div>
-                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-indigo-500 text-[10px] uppercase mb-1">● Academic Master (Scholar Node)</h5>
-                    <p className="text-[10px]">Advanced study intelligence. Explains complex concepts and audits school supplies for max budget efficiency.</p>
-                  </div>
-                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-emerald-green text-[10px] uppercase mb-1">● Pro Gamer Scout (Elite Gear)</h5>
-                    <p className="text-[10px]">Tactical hardware sourcing for gaming dominance. Isolates the best specs in GPUs and peripherals.</p>
-                  </div>
-                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-purple-500 text-[10px] uppercase mb-1">● Pharmacy Scout (Health Auditor)</h5>
-                    <p className="text-[10px]">Medicine cost auditor. Compares Walgreens vs CVS vs Walmart vs Amazon instantly for pharmaceuticals.</p>
-                  </div>
-                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-amber-500 text-[10px] uppercase mb-1">● Fuel Scout (Energy Monitor)</h5>
-                    <p className="text-[10px]">Monitors energy prices and fuel costs near you to optimize your commute and household utility spending.</p>
-                  </div>
-                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-cyan-600 text-[10px] uppercase mb-1">● Hogar Scout (Housing Locator)</h5>
-                    <p className="text-[10px]">Real estate intelligence. Locates active rent/sale listings with map integration and direct contact protocols.</p>
-                  </div>
-                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-teal-600 text-[10px] uppercase mb-1">● Recipe Scout (Food Intel)</h5>
-                    <p className="text-[10px]">Analyzes ingredients vs grocery budget. Audits Walmart and Amazon Fresh for the most efficient meal plan.</p>
-                  </div>
-                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-lime-600 text-[10px] uppercase mb-1">● Gardening Scout (Agri-Tech)</h5>
-                    <p className="text-[10px]">Plant species health diagnostics and irrigation tech sourcing for your yard's specific micro-environment.</p>
-                  </div>
-                  <div className="bg-white/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                    <h5 className="font-bold text-stone-500 text-[10px] uppercase mb-1">● Master Builder (Project Unit)</h5>
-                    <p className="text-[10px]">Construction logistics. Scans sites to identify material phases and bulk pricing for sand, steel, and cement.</p>
-                  </div>
-                </div>
-                <div className="bg-emerald-green/5 p-4 rounded-xl border border-emerald-green/20">
-                  <h6 className="text-[10px] uppercase font-black text-emerald-green mb-2">Global Partner Network</h6>
-                  <ul className="grid grid-cols-2 gap-2 text-[9px] font-bold opacity-80 uppercase tracking-tighter">
-                    <li>● Amazon Intelligence</li>
-                    <li>● Walmart Supercenter Audit</li>
-                    <li>● Best Buy Tech Node</li>
-                    <li>● Home Depot Material Ops</li>
-                    <li>● eBay Tactical Marketplace</li>
-                    <li>● Office Depot Station</li>
-                    <li>● Sweetwater Sound Lab</li>
-                  </ul>
                 </div>
               </div>
-
-              <div className="bg-amber-500/10 p-6 rounded-2xl border border-amber-500/30 mt-8">
-                 <h4 className="font-bold text-amber-600 dark:text-amber-400 mb-2 uppercase italic leading-none flex items-center gap-2">
-                   <Calculator className="w-5 h-5 text-[#FFD700]" /> Savings Calculator (Elite Gold Unit)
-                 </h4>
-                 <p className="text-sm">The <strong>Savings Calculator</strong> is our most prestigious economic instrument. Encased in a pure gold chassis with turquoise diamond buttons, it detects your location via IP in real-time to analyze regional price indexes and quantify your annual tactical advantage.</p>
-               </div>
-
-              <p>
-                From the latest iPhone vs Samsung duels to complex construction material audits, Versusfy is your definitive guide to market dominance.
-              </p>
             </div>
           </motion.div>
         );
@@ -1204,7 +1139,7 @@ const ComparisonResultView = ({
         );
       case 'contact':
         return (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-2xl bg-white dark:bg-neutral-900 p-8 rounded-2xl border border-neutral-200 dark:border-neutral-800">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-2xl bg-white dark:bg-neutral-900 p-4 sm:p-8 rounded-2xl border border-neutral-200 dark:border-neutral-800">
             <h2 className="text-3xl font-bold mb-4 text-neutral-900 dark:text-white">Contact Us</h2>
             <form onSubmit={handleContactSubmit} className="space-y-4">
               <input
@@ -1281,155 +1216,84 @@ const ComparisonResultView = ({
         );
       case 'faq':
         return (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-4xl bg-white dark:bg-neutral-900 p-8 rounded-2xl border border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-300">
-            <h2 className="text-4xl font-bold mb-6 text-emerald-green">Tactical Operations: How-To Guide</h2>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-4xl bg-white dark:bg-neutral-900 p-4 sm:p-8 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-2xl mx-auto">
+            <h2 className="text-3xl sm:text-5xl font-black mb-6 text-emerald-green uppercase tracking-tighter italic leading-tight">Tactical Operations: How-To Guide</h2>
             
-            <h3 className="text-2xl font-semibold mt-6 mb-3 text-neutral-900 dark:text-white">Active Operational Protocol</h3>
-            <ol className="list-decimal list-inside space-y-2 mb-6 text-sm">
-              <li><strong>Initiate Recon:</strong> Enter your target product name in "Product A".</li>
-              <li><strong>Target Market Nodes:</strong> Use the search icon to identify alternatives and similar specs.</li>
-              <li><strong>Activate Duel:</strong> Click "Compare" for a deep-dive AI battle and final verdict.</li>
-              <li><strong>Secure Discounts:</strong> Deploy <strong>"Coupon Scout"</strong> to isolate real-time promo codes.</li>
-              <li><strong>Logistics Situational Awareness:</strong> Activate <strong>"Pathfinder Intelligence"</strong> for real-time traffic and GPS audits.</li>
-              <li><strong>Fuel Optimization:</strong> Mobilize <strong>"Fuel Scout"</strong> to find the cheapest energy nodes near your location.</li>
-              <li><strong>Housing Intelligence:</strong> Deploy <strong>"Hogar Scout"</strong> for real-time rent/sale reconnaissance.</li>
-              <li><strong>Material Mastery:</strong> Use <strong>"Master Builder"</strong> to identify construction material phases and bulk pricing.</li>
-              <li><strong>Household Performance:</strong> Use the <strong>"Savings Calculator"</strong> to audit your annual economy.</li>
-              <li><strong>Claim Hero Status:</strong> Generate your <strong>Savings Ticket</strong> flyer to lead your network.</li>
+            <h3 className="text-xl sm:text-2xl font-black text-neutral-900 dark:text-white uppercase tracking-tight mb-4 border-b border-neutral-100 dark:border-neutral-800 pb-2 italic">Active Operational Protocol</h3>
+            <ol className="list-decimal list-inside space-y-3 mb-8 text-[11px] sm:text-sm font-medium">
+              <li><strong className="text-emerald-green uppercase tracking-tighter">Initiate Recon:</strong> Enter your target product name in "Product A".</li>
+              <li><strong className="text-emerald-green uppercase tracking-tighter">Target Market Nodes:</strong> Use the search icon to identify alternatives and similar specs.</li>
+              <li><strong className="text-emerald-green uppercase tracking-tighter">Activate Duel:</strong> Click "Compare" for a deep-dive AI battle and final verdict.</li>
+              <li><strong className="text-emerald-green uppercase tracking-tighter">Secure Discounts:</strong> Deploy <strong className="italic">"Coupon Scout"</strong> to isolate real-time promo codes.</li>
+              <li><strong className="text-emerald-green uppercase tracking-tighter">Situational Awareness:</strong> Activate <strong className="italic">"Pathfinder GPS"</strong> for real-time traffic audits.</li>
+              <li><strong className="text-emerald-green uppercase tracking-tighter">Fuel Optimization:</strong> Mobilize <strong className="italic">"Fuel Scout"</strong> to find the cheapest energy nodes.</li>
+              <li><strong className="text-emerald-green uppercase tracking-tighter">Household Performance:</strong> Use the <strong className="italic text-[#FFD700]">Savings Calculator</strong> to audit your annual economy.</li>
             </ol>
 
-            <h3 className="text-2xl font-semibold mt-8 mb-4 text-emerald-green border-b border-emerald-green/20 pb-2">The AI Scout Manual</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 text-xs">
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2 uppercase">
-                  <Navigation className="text-orange-500 w-4 h-4" /> Pathfinder Ops
+            <h3 className="text-xl sm:text-2xl font-black text-emerald-green uppercase tracking-tight mb-6 italic border-b border-emerald-green/20 pb-2">The AI Scout Manual</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-12 text-[10px] sm:text-xs leading-relaxed opacity-80">
+              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-5 sm:p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
+                <h4 className="font-black text-neutral-900 dark:text-white mb-2 flex items-center gap-2 uppercase italic tracking-widest leading-none">
+                  <Navigation className="text-orange-500 w-4 h-4" /> Pathfinder GPS
                 </h4>
-                <p>Audits traffic vectors in real-time. Ensures your transport logistics are optimized for speed and fuel conservation across all global cities.</p>
+                <p className="text-red-500 font-bold uppercase tracking-tighter text-[9px] mb-2 leading-none">In Construction - Vote Now!</p>
+                <p>Audits traffic vectors in real-time. Ensures transport logistics are optimized for speed and fuel conservation via satellite telemetry.</p>
               </div>
 
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2 uppercase">
-                  <Home className="text-cyan-600 w-4 h-4" /> Hogar Scout
+              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-5 sm:p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
+                <h4 className="font-black text-neutral-900 dark:text-white mb-2 flex items-center gap-2 uppercase italic tracking-widest leading-none">
+                  <Ticket className="text-emerald-green w-4 h-4" /> Coupon Scout
                 </h4>
-                <p>Locates active rent/sale listings with geographic precision. Provides map integration and direct contact protocols.</p>
+                <p>Isolates high-yield promo codes. Strictly audits retailer grids to find exclusive negotiated discounts for the Versusfy network.</p>
               </div>
 
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2 uppercase">
+              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-5 sm:p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
+                <h4 className="font-black text-neutral-900 dark:text-white mb-2 flex items-center gap-2 uppercase italic tracking-widest leading-none">
+                  <Droplets className="text-blue-400 w-4 h-4" /> Water Scout
+                </h4>
+                <p>Diagnostic scans for municipal toxicity and sources high-yield filtration units vs bottled costs.</p>
+              </div>
+
+              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-5 sm:p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
+                <h4 className="font-black text-neutral-900 dark:text-white mb-2 flex items-center gap-2 uppercase italic tracking-widest leading-none">
                   <Fuel className="text-amber-500 w-4 h-4" /> Fuel Scout
                 </h4>
-                <p>Energy node monitor. Calibrates to local price nodes to isolate the lowest fuel costs currently available via your IP location.</p>
-              </div>
-
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2 uppercase tracking-tighter">
-                  <Briefcase className="text-amber-600 w-4 h-4" /> Job Scout
-                </h4>
-                <p>Career intelligence system. Monitors global recruitment grids to secure high-value employment openings matching your skills.</p>
-              </div>
-
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2 uppercase tracking-tighter">
-                  <Car className="text-red-600 w-4 h-4" /> Mechanic Unit
-                </h4>
-                <p>Diagnostic scanning tool for engine parts. Sources inventory from US auto chains at verified tactical rates instantly.</p>
-              </div>
-
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2 uppercase tracking-tighter">
-                  <Shirt className="text-pink-500 w-4 h-4" /> Style Scout
-                </h4>
-                <p>Aesthetic DNA analyzer. Optimizes your visual presence by matching clothing and beauty products with retailer pricing.</p>
+                <p>Monitors regional gasoline and electrical grid pricing. Calibrates household spending to the lowest regional node.</p>
               </div>
             </div>
 
-            <h3 className="text-2xl font-semibold mt-8 mb-4 text-emerald-green border-b border-emerald-green/20 pb-2">Omni-Assistant: The Pulsating Sphere</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-emerald-green text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">!</span>
-                  Activate the Personal Advisor
-                </h4>
-                <p className="text-sm">Click the <strong>Pulsating Sphere</strong> (Green, White, and Red) in the bottom right corner. This launches your <strong>Omni-Assistant</strong>, a personal advisor with a soft, helpful voice.</p>
-              </div>
-
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-emerald-green text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">?</span>
-                  Voice & Interaction
-                </h4>
-                <p className="text-sm">Talk to her or type your request. She will greet you with <em>"How can I assist you with today?"</em> and can read back comparisons using <strong>Text-to-Speech</strong>. It's the ultimate tactical companion for your shopping decisions.</p>
-              </div>
-            </div>
-
-            <h3 className="text-2xl font-semibold mt-8 mb-4 text-emerald-green border-b border-emerald-green/20 pb-2">Mastering "My Personal Buyer" Assistant</h3>
-            <div className="space-y-6 mb-8">
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-emerald-green text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">1</span>
-                  Start a Conversation
-                </h4>
-                <p className="text-sm">Click the <strong>"My Personal Buyer"</strong> button at the top of the screen. Simply tell the AI what you are looking for in natural language. For example: <em>"I need a high-end gaming laptop under $2000 for video editing."</em></p>
-              </div>
-
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-emerald-green text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">2</span>
-                  Review & Refine
-                </h4>
-                <p className="text-sm">The AI will analyze your request and present a summary including Category, Style, Budget, and Location. If everything looks correct, you're ready for the next step.</p>
-              </div>
-
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-emerald-green text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">3</span>
-                  Set Up Real-Time Alerts
-                </h4>
-                <p className="text-sm">Before clicking <strong>"Activate Alert"</strong>, you can optionally enter your <strong>WhatsApp number</strong> or <strong>Email address</strong>. This allows the system to notify you the moment a deal matching your criteria is found, even if you aren't using the app.</p>
-              </div>
-
-              <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800">
-                <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <span className="bg-emerald-green text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px]">4</span>
-                  Receiving Notifications
-                </h4>
-                <ul className="list-disc list-inside text-sm space-y-2">
-                  <li><strong>Email:</strong> You will receive a professional alert with the product details and a direct "View Product" button.</li>
-                  <li><strong>WhatsApp:</strong> You will see a "Send to WhatsApp" button in your recent alerts. Clicking it will instantly prepare a message with all the deal info ready to be sent.</li>
-                  <li><strong>In-App:</strong> Check the "Recent Alerts" sidebar for real-time matches found by the AI.</li>
-                </ul>
-              </div>
-            </div>
-
-            <h3 className="text-2xl font-semibold mt-8 mb-4 text-emerald-green border-b border-emerald-green/20 pb-2">Omni-Assistant: The Supreme Interface</h3>
-            <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800 mb-8">
-              <h4 className="font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2 uppercase">
-                <Bot className="text-emerald-green" /> The Pulsating Sphere Protocol
-              </h4>
-              <p className="text-sm">Click the <strong>Pulsating Sphere</strong> (Red, White, and Green) in the bottom right corner to initialize your Supreme Interface. She is your tactical companion for vocal assistance, real-time translations, and providing expert shopping verdicts via Text-to-Speech across any domain.</p>
-            </div>
-
-            <h3 className="text-2xl font-semibold mt-6 mb-3 text-neutral-900 dark:text-white uppercase text-lg border-b border-neutral-700 pb-2">Tactical Intelligence FAQ</h3>
-            <div className="space-y-4 text-sm">
+            <h3 className="text-xl sm:text-2xl font-black text-emerald-green uppercase tracking-tight mb-6 italic border-b border-emerald-green/20 pb-2">Omni-Assistant: The Supreme Interface</h3>
+            <div className="bg-neutral-50 dark:bg-neutral-800/30 p-6 rounded-3xl border border-neutral-100 dark:border-neutral-800 mb-8 flex flex-col sm:flex-row items-center gap-6">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-green-500 via-white to-red-500 animate-pulse border-2 border-white shadow-xl flex-shrink-0" />
               <div>
-                <h4 className="font-bold text-neutral-900 dark:text-white uppercase text-xs">What is Versusfy Intelligence?</h4>
-                <p>Versusfy is a global AI intelligence network designed for extreme economic optimization and product analysis. We use specialized scouts to secure the best prices, coupons, and logistics data in real-time.</p>
-              </div>
-              <div>
-                <h4 className="font-bold text-neutral-900 dark:text-white uppercase text-xs">Is my data secure?</h4>
-                <p>Yes. Our architecture is built with "Privacy by Design." We do not store personal search data or track your identities across nodes. Your strategic intent remains your own.</p>
-              </div>
-              <div>
-                <h4 className="font-bold text-neutral-900 dark:text-white uppercase text-xs">Can it compare everything?</h4>
-                <p>Yes. By activating <strong>Omni-Mode</strong>, our Titan-Class AI can analyze anything from medications (Pharmacy Scout) and apartments (Hogar Scout) to career paths (Job Scout) and construction projects (Master Builder).</p>
-              </div>
-              <div>
-                <h4 className="font-bold text-neutral-900 dark:text-white uppercase text-xs">How do I lead my community?</h4>
-                <p>Claim your <strong>Hero Status</strong> after any market victory. Share your Savings Ticket flyer to inspire others to mobilize for financial freedom and reach elite community tiers.</p>
+                <h4 className="font-black text-neutral-900 dark:text-white mb-2 uppercase tracking-widest text-xs">The Pulsating Sphere Protocol</h4>
+                <p className="text-[11px] sm:text-sm leading-relaxed">Click the orb in the bottom right corner (Red, White, Green). She handles vocal tactical assistance, real-time comparisons, and shopping verdicts via Text-to-Speech.</p>
               </div>
             </div>
 
-            <div className="mt-8 pt-6 border-t border-neutral-200 dark:border-neutral-700 text-center">
+            <div className="space-y-4 mb-12">
+              <h4 className="font-black text-neutral-900 dark:text-white uppercase tracking-tight italic border-b border-neutral-100 dark:border-neutral-800 pb-2">Tactical Intelligence FAQ</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-[10px] sm:text-xs leading-relaxed">
+                <div>
+                  <h5 className="font-black text-emerald-green uppercase tracking-tighter mb-1">What is Versusfy Intelligence?</h5>
+                  <p>A global network designed for extreme price neutralization. We use scouts to secure the best discount nodes and logistics data.</p>
+                </div>
+                <div>
+                  <h5 className="font-black text-emerald-green uppercase tracking-tighter mb-1">Is my data secure?</h5>
+                  <p>Yes. High-level encryption and anonymous processing. We do not store strategic intent or identification signatures.</p>
+                </div>
+                <div>
+                  <h5 className="font-black text-emerald-green uppercase tracking-tighter mb-1">Does it work globally?</h5>
+                  <p>Affirmative. Versusfy monitors retail nodes in the US, Europe, and Global markets, with IP-calibrated local pricing.</p>
+                </div>
+                <div>
+                  <h5 className="font-black text-emerald-green uppercase tracking-tighter mb-1">How can I assist the network?</h5>
+                  <p>Claim your Hero Status after a successful audit. Share your Savings Ticket to inspire others to mobilize for savings.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-neutral-100 dark:border-neutral-700 text-center">
               <button 
                 onClick={() => setView('home')} 
                 className="bg-emerald-green hover:bg-emerald-600 text-white font-black py-4 px-10 rounded-full transition-all uppercase tracking-[0.2em] text-[10px] shadow-xl shadow-emerald-green/20"
@@ -1481,7 +1345,7 @@ const ComparisonResultView = ({
 
             {/* Why We Are Better Cards */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-              <div className="bg-neutral-900 p-8 rounded-3xl space-y-4 border border-emerald-green/20 group hover:border-emerald-green transition-all duration-500">
+              <div className="bg-neutral-900 p-4 sm:p-8 rounded-3xl space-y-4 border border-emerald-green/20 group hover:border-emerald-green transition-all duration-500">
                 <div className="w-12 h-12 bg-emerald-green/10 rounded-2xl flex items-center justify-center text-emerald-green">
                   <ShieldCheck size={28} />
                 </div>
@@ -1489,7 +1353,7 @@ const ComparisonResultView = ({
                 <p className="text-neutral-400 text-xs leading-relaxed">Honey and Google are data-hungry giants. Versusfy is a "Ghost Platform"—we compare, you save, and we forget you were ever here. No tracking, no profiles.</p>
               </div>
 
-              <div className="bg-neutral-900 p-8 rounded-3xl space-y-4 border border-apple-red/20 group hover:border-apple-red transition-all duration-500">
+              <div className="bg-neutral-900 p-4 sm:p-8 rounded-3xl space-y-4 border border-apple-red/20 group hover:border-apple-red transition-all duration-500">
                 <div className="w-12 h-12 bg-apple-red/10 rounded-2xl flex items-center justify-center text-apple-red">
                   <Zap size={28} />
                 </div>
@@ -1497,7 +1361,7 @@ const ComparisonResultView = ({
                 <p className="text-neutral-400 text-xs leading-relaxed">Versus.com gives you numbers; we give you answers. Our AI doesn't just list RAM, it tells you IF that RAM matters for your specific needs.</p>
               </div>
 
-              <div className="bg-neutral-900 p-8 rounded-3xl space-y-4 border border-purple-500/20 group hover:border-purple-500 transition-all duration-500">
+              <div className="bg-neutral-900 p-4 sm:p-8 rounded-3xl space-y-4 border border-purple-500/20 group hover:border-purple-500 transition-all duration-500">
                 <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-500">
                   <Camera size={28} />
                 </div>
@@ -1505,7 +1369,7 @@ const ComparisonResultView = ({
                 <p className="text-neutral-400 text-xs leading-relaxed">The only platform that "sees" your world. Point your camera at a real product and Versusfy identifies it and finds the best deals in real-time. Pure magic.</p>
               </div>
 
-              <div className="bg-neutral-900 p-8 rounded-3xl space-y-4 border border-blue-500/20 group hover:border-blue-500 transition-all duration-500">
+              <div className="bg-neutral-900 p-4 sm:p-8 rounded-3xl space-y-4 border border-blue-500/20 group hover:border-blue-500 transition-all duration-500">
                 <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500">
                   <BarChart3 size={28} />
                 </div>
@@ -1513,7 +1377,7 @@ const ComparisonResultView = ({
                 <p className="text-neutral-400 text-xs leading-relaxed">While others are static lists, we are dynamic. Our Price Evolution charts and GEO-coupons ensure you buy at the exact bottom of the market.</p>
               </div>
 
-              <div className="bg-neutral-900 p-8 rounded-3xl space-y-4 border border-violet-500/20 group hover:border-violet-500 transition-all duration-500">
+              <div className="bg-neutral-900 p-4 sm:p-8 rounded-3xl space-y-4 border border-violet-500/20 group hover:border-violet-500 transition-all duration-500">
                 <div className="w-12 h-12 bg-violet-500/10 rounded-2xl flex items-center justify-center text-violet-500">
                   <Users size={28} />
                 </div>
@@ -1604,9 +1468,9 @@ const ComparisonResultView = ({
               </div>
 
               {/* Section 3: The Sincere Truth */}
-              <div className="bg-emerald-green p-12 rounded-[3rem] text-center space-y-6 shadow-[0_20px_50px_rgba(16,185,129,0.3)]">
+              <div className="bg-emerald-green p-6 md:p-12 rounded-[3rem] text-center space-y-6 shadow-[0_20px_50px_rgba(16,185,129,0.3)]">
                 <Globe className="text-black/20 w-24 h-24 mx-auto mb-2" />
-                <h3 className="text-4xl md:text-5xl font-black text-black leading-none uppercase italic">The Sincere Truth</h3>
+                <h3 className="text-2xl sm:text-4xl md:text-5xl font-black text-black leading-none uppercase italic">The Sincere Truth</h3>
                 <p className="text-black/80 text-xl font-bold max-w-2xl mx-auto italic">"If you ask if anyone equals Versusfy on the global stage today: The answer is a definitive NO."</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left max-w-4xl mx-auto">
                    <div className="bg-black/5 p-6 rounded-2xl border border-black/10">
@@ -1695,7 +1559,7 @@ const ComparisonResultView = ({
                 { icon: Sprout, title: 'Plant Pairing', desc: 'Perfect plant recommendations for your specific sunlight level.' },
                 { icon: Shovel, title: 'Tool Depot', desc: 'Tactical tools and irrigation systems available at your favorite stores.' }
               ].map((f, i) => (
-                <div key={i} className="p-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl hover:border-emerald-green transition-colors group">
+                <div key={i} className="p-4 sm:p-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl hover:border-emerald-green transition-colors group">
                    <f.icon className="text-emerald-green mb-4 group-hover:scale-110 transition-transform" />
                    <h4 className="font-black uppercase tracking-tighter text-neutral-900 dark:text-white mb-2">{f.title}</h4>
                    <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed font-medium">{f.desc}</p>
@@ -2737,13 +2601,13 @@ const ComparisonResultView = ({
                 className="w-full max-w-2xl mb-8 p-6 bg-white dark:bg-neutral-900 border-4 border-red-500 rounded-2xl shadow-[0_0_20px_rgba(239,68,68,0.5)] cursor-pointer overflow-hidden relative"
               >
                 <div className="absolute inset-0 bg-red-500/5 pointer-events-none" />
-                <h3 className="text-2xl md:text-3xl font-black text-center text-red-500 uppercase tracking-tighter drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]">
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-center text-red-500 uppercase tracking-tighter drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]">
                   {bannerPhrase.text}
                 </h3>
               </motion.div>
             )}
 
-            <div className="w-full max-w-3xl bg-white dark:bg-neutral-900 p-8 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-2xl">
+            <div className="w-full max-w-3xl bg-white dark:bg-neutral-900 p-4 sm:p-8 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-2xl">
               <div className="flex flex-col gap-6 mb-6">
                 {/* Item A Section */}
                 <div className="flex flex-col gap-2">
@@ -2954,7 +2818,7 @@ const ComparisonResultView = ({
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-12 flex flex-col items-center relative overflow-x-hidden">
+    <div className="min-h-screen p-2 sm:p-4 md:p-12 flex flex-col items-center relative overflow-x-hidden">
       <AnimatePresence>
         {currentSubliminal && (
           <div
@@ -2973,16 +2837,16 @@ const ComparisonResultView = ({
       <FirebaseStatus />
 
       {/* IA Agents Sidebar Dropdown */}
-      <div className="fixed left-6 top-6 z-[60]">
+      <div className="fixed left-3 sm:left-6 top-3 sm:top-6 z-[60]">
         <div className="relative">
           <button 
             onClick={() => setIsIAAgentsOpen(!isIAAgentsOpen)}
-            className="flex items-center gap-3 px-5 py-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-xl hover:border-emerald-green transition-all group active:scale-95"
+            className="flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-5 sm:py-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-xl hover:border-emerald-green transition-all group active:scale-95"
           >
-            <div className="w-8 h-8 bg-emerald-green/10 rounded-lg flex items-center justify-center group-hover:bg-emerald-green group-hover:text-white transition-colors">
-              <Bot size={20} className={isIAAgentsOpen ? 'rotate-12' : ''} />
+            <div className="w-8 h-8 sm:w-8 sm:h-8 bg-emerald-green/10 rounded-lg flex items-center justify-center group-hover:bg-emerald-green group-hover:text-white transition-colors">
+              <Bot size={16} className={`sm:w-5 sm:h-5 ${isIAAgentsOpen ? 'rotate-12' : ''}`} />
             </div>
-            <span className="font-black uppercase tracking-tighter text-sm text-neutral-900 dark:text-white pr-2">IA Agents</span>
+            <span className="font-black uppercase tracking-tighter text-[10px] sm:text-sm text-neutral-900 dark:text-white pr-2">IA Agents</span>
             <ChevronDown className={`transition-transform duration-300 transform-gpu ${isIAAgentsOpen ? 'rotate-180' : ''}`} size={16} />
           </button>
 
@@ -2992,7 +2856,7 @@ const ComparisonResultView = ({
                 initial={{ opacity: 0, scale: 0.9, x: -20, transformOrigin: 'top left' }}
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.9, x: -20 }}
-                className="absolute top-full left-0 mt-3 w-72 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] overflow-y-auto max-h-[70vh] p-3 space-y-1 z-50 backdrop-blur-xl bg-opacity-95 dark:bg-opacity-95 custom-scrollbar pb-6"
+                className="absolute top-full left-0 mt-3 w-[calc(100vw-2.5rem)] sm:w-80 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] overflow-y-auto max-h-[70vh] p-3 space-y-1 z-50 backdrop-blur-xl bg-opacity-95 dark:bg-opacity-95 custom-scrollbar pb-6"
               >
                 <div className="px-4 py-3 mb-2 flex justify-between items-center sticky top-0 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md z-10 pt-4 border-b border-neutral-100 dark:border-neutral-800">
                   <div>
@@ -3182,26 +3046,26 @@ const ComparisonResultView = ({
         <a href="https://www.threads.com" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white hover:text-emerald-green transition"><AtSign size={20} /></a>
       </div>
 
-      <footer className="mt-auto pt-12 flex flex-col items-center gap-4 text-neutral-500">
-        <div className="w-full bg-neutral-900 border-t border-b border-emerald-green/10 py-2 overflow-hidden mb-8 shadow-2xl">
-          <div className="flex gap-12 whitespace-nowrap animate-marquee">
+      <footer className="mt-auto pt-8 sm:pt-12 flex flex-col items-center gap-4 text-neutral-500 pb-8">
+        <div className="w-full bg-neutral-900 border-t border-b border-emerald-green/10 py-1 sm:py-2 overflow-hidden mb-4 sm:mb-8 shadow-2xl">
+          <div className="flex gap-8 sm:gap-12 whitespace-nowrap animate-marquee">
             {Array.from({ length: 15 }).map((_, i) => (
-              <span key={i} className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-4">
+              <span key={i} className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2 sm:gap-4">
                 {i % 3 === 0 ? (
                   <>
-                    <Zap size={10} className="text-emerald-green" /> 
+                    <Zap size={8} className="text-emerald-green sm:w-2.5 sm:h-2.5" /> 
                     <span className="text-emerald-green">Win the afternoon with Versusfy</span>
                     <span className="text-emerald-green/20">|</span>
                   </>
                 ) : i % 3 === 1 ? (
                   <>
-                    <Zap size={10} className="text-emerald-green" /> 
+                    <Zap size={8} className="text-emerald-green sm:w-2.5 sm:h-2.5" /> 
                     <span className="text-apple-red">Mother's Day Special: Gifts & Deals</span>
                     <span className="text-emerald-green/20">|</span>
                   </>
                 ) : (
                   <>
-                    <Zap size={10} className="text-emerald-green" /> 
+                    <Zap size={8} className="text-emerald-green sm:w-2.5 sm:h-2.5" /> 
                     GLOBAL SAVINGS: <span className="text-white">${footerStats.savings.toLocaleString()}</span>
                     <span className="text-emerald-green/20">|</span>
                   </>
@@ -3211,19 +3075,19 @@ const ComparisonResultView = ({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-x-6 gap-y-3 justify-center px-4">
-          <button onClick={() => setView('home')} className="flex items-center gap-1 hover:text-white transition"><Home size={16}/> Home</button>
-          <button onClick={() => setView('special-events')} className="flex items-center gap-1 hover:text-white transition"><Sparkles size={16}/> Events AI</button>
+        <div className="flex flex-wrap gap-x-4 sm:gap-x-6 gap-y-3 justify-center px-4 text-[10px] sm:text-xs">
+          <button onClick={() => setView('home')} className="flex items-center gap-1 hover:text-white transition"><Home size={14}/> Home</button>
+          <button onClick={() => setView('special-events')} className="flex items-center gap-1 hover:text-white transition group"><Sparkles size={14}/> Events</button>
           <button onClick={() => setIsCalculatorOpen(true)} className="flex items-center gap-1 hover:text-white transition group">
-            <Calculator size={16} className="text-[#FFD700] group-hover:animate-pulse"/>
-            <span className="text-[#FFD700] font-black uppercase tracking-tighter">Savings Calculator</span>
+            <Calculator size={14} className="text-[#FFD700] group-hover:animate-pulse"/>
+            <span className="text-[#FFD700] font-black uppercase tracking-tighter">Savings</span>
           </button>
-          <button onClick={() => setView('about')} className="flex items-center gap-1 hover:text-white transition"><Info size={16}/> About</button>
-          <button onClick={() => setView('faq')} className="flex items-center gap-1 hover:text-white transition"><HelpCircle size={16}/> FAQ</button>
-          <button onClick={() => setView('benefits')} className="flex items-center gap-1 hover:text-white transition"><Info size={16}/> Benefits</button>
-          <button onClick={() => setView('global-intel')} className="flex items-center gap-1 hover:text-white transition font-black text-emerald-green"><Globe size={16}/> Global Intel</button>
-          <button onClick={() => setView('privacy')} className="flex items-center gap-1 hover:text-white transition"><ShieldCheck size={16}/> Privacy</button>
-          <button onClick={() => setView('contact')} className="flex items-center gap-1 hover:text-white transition"><Mail size={16}/> Contact</button>
+          <button onClick={() => setView('about')} className="flex items-center gap-1 hover:text-white transition"><Info size={14}/> About</button>
+          <button onClick={() => setView('faq')} className="flex items-center gap-1 hover:text-white transition"><HelpCircle size={14}/> FAQ</button>
+          <button onClick={() => setView('benefits')} className="flex items-center gap-1 hover:text-white transition"><Info size={14}/> Benefits</button>
+          <button onClick={() => setView('global-intel')} className="flex items-center gap-1 hover:text-white transition font-black text-emerald-green"><Globe size={14}/> Intel</button>
+          <button onClick={() => setView('privacy')} className="flex items-center gap-1 hover:text-white transition"><ShieldCheck size={14}/> Privacy</button>
+          <button onClick={() => setView('contact')} className="flex items-center gap-1 hover:text-white transition"><Mail size={14}/> Contact</button>
         </div>
         <div className="text-[10px] opacity-30 uppercase tracking-[0.2em] font-mono">
           Versusfy Engine v2.2.0-OMNI

@@ -145,7 +145,7 @@ export const TrendingWindow = ({ comparison, side }: { comparison: TrendingCompa
         </div>
 
         {/* Individual Voting Zones */}
-        <div className="grid grid-cols-2 gap-3 relative">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 relative">
           <ProductVoteZone 
             productName={comparison.productA} 
             side="productA" 

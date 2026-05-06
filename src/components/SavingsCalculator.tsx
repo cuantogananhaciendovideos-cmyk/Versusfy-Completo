@@ -139,7 +139,7 @@ export const SavingsCalculator: React.FC<SavingsCalculatorProps> = ({
             background: 'linear-gradient(135deg, #FFD700 0%, #B8860B 50%, #FFD700 100%)',
           }}
         >
-          <div className="bg-neutral-950 rounded-[28px] p-6 text-white min-h-[600px] flex flex-col relative">
+          <div className="bg-neutral-950 rounded-[28px] p-4 sm:p-6 text-white h-full max-h-[calc(100vh-4rem)] flex flex-col relative overflow-hidden">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-amber-500/10 rounded-xl border border-amber-500/20">

@@ -116,14 +116,14 @@ export const PathfinderIntelligence: React.FC<PathfinderProps> = ({ onClose, det
   // 1. ALWAYS SHOW CONSTRUCTION/VOTING FIRST
   if (showConstruction) {
     return (
-      <div className="bg-neutral-900 border border-red-500/30 w-full rounded-3xl overflow-hidden flex flex-col h-[85vh] shadow-[0_0_100px_rgba(239,68,68,0.1)] relative">
+      <div className="bg-neutral-900 border border-red-500/30 w-full rounded-3xl overflow-hidden flex flex-col min-h-[500px] h-full sm:h-[85vh] shadow-[0_0_100px_rgba(239,68,68,0.1)] relative">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="absolute inset-0 z-50 bg-black/95 backdrop-blur-xl flex items-center justify-center p-6 text-center"
+          className="absolute inset-0 z-50 bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 sm:p-6 text-center"
         >
-          <div className="max-w-xl w-full">
+          <div className="max-w-xl w-full max-h-full overflow-y-auto cursor-default py-8">
             <div className="w-24 h-24 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse">
               <Navigation size={48} className="text-red-500" />
             </div>

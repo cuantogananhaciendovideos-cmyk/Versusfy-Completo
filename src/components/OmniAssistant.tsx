@@ -250,18 +250,18 @@ export const OmniAssistant: React.FC<OmniAssistantProps> = ({ isOpen, onClose, o
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
-            className="w-full max-w-2xl bg-neutral-900 border border-neutral-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col relative"
+            className="w-full max-w-2xl bg-neutral-900 border border-neutral-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col relative h-full max-h-[calc(100vh-4rem)]"
           >
             {/* Close Button */}
             <button 
               onClick={onClose}
-              className="absolute top-6 right-6 z-10 p-2 hover:bg-white/10 rounded-full transition-colors text-white/50 hover:text-white"
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 p-2 hover:bg-white/10 rounded-full transition-colors text-white/50 hover:text-white"
             >
               <X size={24} />
             </button>
 
             {/* Pulsating Sphere Header */}
-            <div className={`p-8 flex flex-col items-center gap-6 bg-gradient-to-b ${agentMode === 'style' ? 'from-pink-500/10' : agentMode === 'builder' ? 'from-orange-500/10' : agentMode === 'mechanic' ? 'from-red-600/10' : agentMode === 'energy' ? 'from-yellow-500/10' : agentMode === 'gardening' ? 'from-emerald-green/10' : 'from-emerald-green/10'} to-transparent`}>
+            <div className={`p-4 sm:p-8 flex flex-col items-center gap-4 sm:gap-6 bg-gradient-to-b ${agentMode === 'style' ? 'from-pink-500/10' : agentMode === 'builder' ? 'from-orange-500/10' : agentMode === 'mechanic' ? 'from-red-600/10' : agentMode === 'energy' ? 'from-yellow-500/10' : agentMode === 'gardening' ? 'from-emerald-green/10' : 'from-emerald-green/10'} to-transparent shrink-0`}>
               <div className="relative w-32 h-32">
                 {/* The Sphere with dynamic color based on mode */}
                 <div className="w-full h-full rounded-full flex flex-col overflow-hidden border-2 border-white/10 shadow-2xl relative">

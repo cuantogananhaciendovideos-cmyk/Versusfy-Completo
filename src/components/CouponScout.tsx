@@ -48,7 +48,7 @@ export const CouponScout = ({ onClose, userName }: { onClose: () => void, userNa
   };
 
   return (
-    <div className="bg-neutral-900 border border-emerald-500/30 w-full rounded-3xl overflow-hidden flex flex-col h-[85vh] shadow-[0_0_100px_rgba(16,185,129,0.1)]">
+    <div className="bg-neutral-900 border border-emerald-500/30 w-full rounded-3xl overflow-hidden flex flex-col min-h-[500px] h-full sm:h-[85vh] shadow-[0_0_100px_rgba(16,185,129,0.1)]">
       {/* Header */}
       <div className="p-6 border-b border-neutral-800 flex items-center justify-between bg-neutral-900/50">
         <div className="flex items-center gap-4">

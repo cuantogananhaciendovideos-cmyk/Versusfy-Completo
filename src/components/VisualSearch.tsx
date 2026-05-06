@@ -442,24 +442,24 @@ export const VisualSearch: React.FC<VisualSearchProps> = ({ onIdentified, isOpen
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white dark:bg-neutral-900 w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800 flex flex-col max-h-[90vh]"
+        className="bg-white dark:bg-neutral-900 w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800 flex flex-col h-full max-h-[calc(100vh-4rem)]"
       >
-        <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-neutral-50 dark:bg-neutral-800/50 flex-shrink-0">
+        <div className="p-4 sm:p-6 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-neutral-50 dark:bg-neutral-800/50 flex-shrink-0">
           <div>
-            <h3 className="text-xl font-black text-neutral-900 dark:text-white uppercase tracking-tighter flex items-center gap-2">
-              {isEnergyMode ? <Zap className="text-yellow-400" /> : isPharmacyMode ? <Pill className="text-emerald-500" /> : <Camera className="text-emerald-green" />}
-              {isEnergyMode ? 'Energy Saving Intelligence' : 
-               isPharmacyMode ? 'Pharmacy Scout Intelligence' :
-               isStyleMode ? 'Personal Style Scout' :
-               isSpaceMode ? 'Space Architect Scan' :
-               isGardeningMode ? 'Gardening Scout Scan' :
-               isMechanicMode ? 'Mechanical Intel Scan' :
-               isBuilderMode ? 'Master Builder Scan' :
+            <h3 className="text-lg sm:text-xl font-black text-neutral-900 dark:text-white uppercase tracking-tighter flex items-center gap-2">
+              {isEnergyMode ? <Zap className="text-yellow-400" size={18} /> : isPharmacyMode ? <Pill className="text-emerald-500" size={18} /> : <Camera className="text-emerald-green" size={18} />}
+              {isEnergyMode ? 'Energy Saving Intel' : 
+               isPharmacyMode ? 'Pharmacy Scout' :
+               isStyleMode ? 'Style Scout' :
+               isSpaceMode ? 'Space Architect' :
+               isGardeningMode ? 'Gardening Scout' :
+               isMechanicMode ? 'Mechanical Intel' :
+               isBuilderMode ? 'Builder Scan' :
                isOfficeMode ? 'Productivity Scan' :
-               'Supreme Visual Search'}
+               'Supreme Visual'}
             </h3>
-            <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest">
-              {isEnergyMode ? 'Analyze bills and appliances for tactical savings' : isPharmacyMode ? 'Analyze medications for price comparison and generic alternatives' : 'Identify products with AI Vision'}
+            <p className="text-[8px] sm:text-[10px] text-neutral-500 uppercase font-bold tracking-widest">
+              {isEnergyMode ? 'Analyze bills for tactical savings' : isPharmacyMode ? 'Compare meds & find generics' : 'Identify products with AI Vision'}
             </p>
           </div>
           <button onClick={handleClose} className="p-2 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-full transition">
@@ -467,7 +467,7 @@ export const VisualSearch: React.FC<VisualSearchProps> = ({ onIdentified, isOpen
           </button>
         </div>
 
-        <div className="p-8 overflow-y-auto custom-scrollbar flex-grow relative min-h-[400px]">
+        <div className="p-4 sm:p-8 overflow-y-auto custom-scrollbar flex-grow relative min-h-[300px]">
           <AnimatePresence mode="wait">
             {isProcessing && mode === 'idle' && (
               <motion.div 

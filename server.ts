@@ -535,16 +535,23 @@ async function startServer() {
 
   // SEO Injection Engine (MEG-SEO AGGRESSIVE SHIELD)
   const injectSEO = (html: string, url: string) => {
-    let title = "Versusfy | AI Product Comparison, Exclusive Coupons & Price Alerts";
-    let description = "Save a fortune with Versusfy's AI. Compare products, find exclusive coupons, and unlock local deals.";
+    let title = "Versusfy | Global Tactical Intelligence Network for Savings & Market Dominance";
+    let description = "Versusfy is the ultimate AI-powered system for extreme savings. Featuring specialized Scouts for Coupons, Jobs, Style, Mechanics, Pathfinder GPS, and Energy Optimization. Compare Amazon, Walmart, and eBay with precision AI audits.";
+    let keywords = "AI savings, product comparison, tactical coupons, Versusfy, Pathfinder GPS, Job Scout, Style Scout, price tracker, Walmart vs Amazon, Best Buy deals, extreme savings network";
     let jsonLd = "";
+
+    // Default Home SEO (Extensive as requested)
+    if (url === '/' || url === '') {
+      description = "Versusfy: The world's most advanced AI Tactical Intelligence Network. Secure extreme savings with Omni-Assistant (Supreme Command), Coupon Scout (high-yield discount auditor), Pathfinder Intelligence (traffic & GPS), Style Scout (personal aesthetics), and Fuel Scout. Audit Amazon, Walmart, eBay, and Best Buy in real-time. Join the global movement of Savings Heroes and dominate the marketplace with tactical price alerts and precision spec battles.";
+    }
 
     // Pattern: /best-deals-in-[city]
     const dealMatch = url.match(/\/best-deals-in-([a-z-]+)/i);
     if (dealMatch) {
       const city = dealMatch[1].split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-      title = `Best Local Product Deals in ${city} | Versusfy AI Savings`;
-      description = `Unlock hidden coupons and exclusive deals in ${city}. Versusfy's AI monitors retailers to save you a fortune in ${city}.`;
+      title = `Best Local Product Deals in ${city} | Versusfy AI Tactical Savings`;
+      description = `Unlock hidden coupons and exclusive retail nodes in ${city}. Versusfy's AI monitors Walmart, Amazon, and local hubs to save you a fortune in ${city}. Tactical GPS Pathfinder and localized fuel audits active.`;
+      keywords += `, deals in ${city}, savings in ${city}, local coupons ${city}`;
       jsonLd = `
         <script type="application/ld+json">
         {
@@ -570,8 +577,9 @@ async function startServer() {
     if (compareMatch) {
       const p1 = compareMatch[1].replace(/-/g, ' ').toUpperCase();
       const p2 = compareMatch[2].replace(/-/g, ' ').toUpperCase();
-      title = `${p1} vs ${p2}: Expert AI Verdict & Lowest Price Guaranteed`;
-      description = `Is ${p1} better than ${p2}? See the expert comparison, tactical specs, and get valid coupons for both products.`;
+      title = `${p1} vs ${p2}: Tactical AI Battle & Lowest Price Audit`;
+      description = `Strategic spec battle: ${p1} vs ${p2}. See the Omni-Assistant verdict, technical precision reports, and secure high-yield coupons for both products. Don't pay more for ${p1} or ${p2}.`;
+      keywords += `, ${p1} vs ${p2}, compare ${p1} ${p2}, ${p1} reviews, ${p2} reviews`;
       jsonLd = `
         <script type="application/ld+json">
         {
@@ -587,17 +595,10 @@ async function startServer() {
       `;
     }
 
-    // Pattern: /hero-status/[name]
-    const heroMatch = url.match(/\/hero-status\/([a-z-]+)/i);
-    if (heroMatch) {
-      const name = heroMatch[1].replace(/-/g, ' ').toUpperCase();
-      title = `${name}: Community Savings Hero | Versusfy Hall of Fame`;
-      description = `Celebrated Hero ${name} has saved their community a fortune using Versusfy AI. Join the movement and start saving today.`;
-    }
-
     return html
       .replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
       .replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${description}" />`)
+      .replace(/<meta name="keywords" content=".*?" \/>/, `<meta name="keywords" content="${keywords}" />`)
       .replace(/<meta property="og:title" content=".*?" \/>/, `<meta property="og:title" content="${title}" />`)
       .replace(/<meta property="og:description" content=".*?" \/>/, `<meta property="og:description" content="${description}" />`)
       .replace('<!-- SEO_INJECTION_POINT -->', jsonLd);
