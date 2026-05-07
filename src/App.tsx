@@ -48,6 +48,7 @@ import { GasMaster } from './components/GasMaster';
 import { JobScout } from './components/JobScout';
 import { CouponScout } from './components/CouponScout';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
+import DailyInsights from './components/DailyInsights';
 import { getTrendingComparisons, TrendingComparison } from './services/trendsService';
 import { Camera, Flame } from 'lucide-react';
 
@@ -2993,6 +2994,9 @@ const ComparisonResultView = ({
             </div>
           )}
         </AnimatePresence>
+        
+        <DailyInsights />
+
         <p className="text-neutral-600 dark:text-neutral-400">Pick Your Winner!</p>
         <div className="flex flex-col items-center gap-4 mt-2">
           <div className="flex flex-wrap justify-center gap-3 md:gap-4 px-4 text-center">

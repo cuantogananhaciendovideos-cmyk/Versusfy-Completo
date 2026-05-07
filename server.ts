@@ -536,13 +536,13 @@ async function startServer() {
   // SEO Injection Engine (MEG-SEO AGGRESSIVE SHIELD)
   const injectSEO = (html: string, url: string) => {
     let title = "Versusfy | Global Tactical Intelligence Network for Savings & Market Dominance";
-    let description = "Versusfy is the ultimate AI-powered system for extreme savings. Featuring specialized Scouts for Coupons, Jobs, Style, Mechanics, Pathfinder GPS, and Energy Optimization. Compare Amazon, Walmart, and eBay with precision AI audits.";
+    let description = "Welcome! Compare prices and save on everything: save on your electricity, water, and gas bills, cosmetics, gardening, appliances, new cellphones, furniture, tablets, laptops, and musical instruments. Find extreme savings at Amazon, Walmart, Home Depot, and eBay.";
     let keywords = "AI savings, product comparison, tactical coupons, Versusfy, Pathfinder GPS, Job Scout, Style Scout, price tracker, Walmart vs Amazon, Best Buy deals, extreme savings network";
     let jsonLd = "";
 
     // Default Home SEO (Extensive as requested)
     if (url === '/' || url === '') {
-      description = "Versusfy: The world's most advanced AI Tactical Intelligence Network. Secure extreme savings with Omni-Assistant (Supreme Command), Coupon Scout (high-yield discount auditor), Pathfinder Intelligence (traffic & GPS), Style Scout (personal aesthetics), and Fuel Scout. Audit Amazon, Walmart, eBay, and Best Buy in real-time. Join the global movement of Savings Heroes and dominate the marketplace with tactical price alerts and precision spec battles.";
+      description = "Welcome! Compare prices and save on everything: save on your electricity, water, and gas bills, cosmetics, gardening, appliances, new cellphones, furniture, tablets, laptops, and musical instruments. Find extreme savings at Amazon, Walmart, Home Depot, and eBay. Here on our page you will find all this and much more—we invite you to visit our site today!";
     }
 
     // Pattern: /best-deals-in-[city]
