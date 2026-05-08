@@ -11,6 +11,9 @@ export interface JobResult {
   source: string;
   postedAt: string;
   tacticalFit: number; // 0-100 score
+  contactEmail?: string;
+  contactPhone?: string;
+  applyUrl?: string;
 }
 
 export interface JobAnalysis {
@@ -22,12 +25,13 @@ export interface JobAnalysis {
 export const scanLocalJobs = async (query: string, city: string, state: string, country: string): Promise<JobAnalysis> => {
   const prompt = `Perform a tactical scan for jobs matching "${query}" in ${city}, ${state}, ${country}. 
   Provide a list of 5 diverse job opportunities with company names, salary ranges (estimated or real), and a 'tacticalFit' score based on growth potential.
+  CRITICAL: You MUST provide realistic contact information for each job, including a 'contactEmail', 'contactPhone' (if available), and a valid-looking 'applyUrl'.
   Also provide a brief 'marketOverview' of the job sector in that city.
   Return a 'spokenResponse' in English (charismatic and professional, max 3 sentences).
   
   JSON Structure:
   {
-    "jobs": [{ "id", "title", "company", "location", "salary", "description", "source", "postedAt", "tacticalFit" }],
+    "jobs": [{ "id", "title", "company", "location", "salary", "description", "source", "postedAt", "tacticalFit", "contactEmail", "contactPhone", "applyUrl" }],
     "marketOverview": "string",
     "spokenResponse": "string"
   }`;

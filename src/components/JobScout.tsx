@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Briefcase, MapPin, Search, TrendingUp, 
   X, Activity, Globe, DollarSign, 
-  ShieldCheck, Share2, Download, Zap
+  ShieldCheck, Share2, Download, Zap,
+  Mail, Phone, ExternalLink
 } from 'lucide-react';
 import { scanLocalJobs, JobAnalysis, JobResult } from '../services/jobService';
 import { speak } from '../lib/speech';
@@ -58,6 +59,34 @@ export const JobScout: React.FC<JobScoutProps> = ({ isOpen, onClose, detectedCit
       console.error("Job scan failed", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApply = (job: JobResult) => {
+    if (job.applyUrl) {
+      window.open(job.applyUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      // Fallback to searching the company if no URL
+      window.open(`https://www.google.com/search?q=${encodeURIComponent(job.company + ' careers ' + job.title)}`, '_blank');
+    }
+  };
+
+  const handleShare = async (job: JobResult) => {
+    const shareData = {
+      title: `Job Opportunity: ${job.title} at ${job.company}`,
+      text: `Tactical Job Alert: I found this ${job.title} position at ${job.company} with a ${job.tacticalFit}% fit score on Versusfy!`,
+      url: job.applyUrl || window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(`${shareData.text} Check it out: ${shareData.url}`);
+        alert("Tactical data copied to clipboard!");
+      }
+    } catch (err) {
+      console.error("Tactical share failed", err);
     }
   };
 
@@ -188,9 +217,35 @@ export const JobScout: React.FC<JobScoutProps> = ({ isOpen, onClose, detectedCit
 
                       <p className="text-xs text-neutral-400 mb-4 line-clamp-2 italic">{job.description}</p>
                       
+                      {/* Contact Info Block */}
+                      <div className="flex flex-wrap gap-4 mb-5 p-3 bg-black/30 rounded-xl border border-neutral-800/50">
+                        {job.contactEmail && (
+                          <div className="flex items-center gap-2">
+                            <Mail size={12} className="text-blue-400" />
+                            <span className="text-[10px] font-bold text-neutral-300 break-all">{job.contactEmail}</span>
+                          </div>
+                        )}
+                        {job.contactPhone && (
+                          <div className="flex items-center gap-2">
+                            <Phone size={12} className="text-emerald-400" />
+                            <span className="text-[10px] font-bold text-neutral-300">{job.contactPhone}</span>
+                          </div>
+                        )}
+                      </div>
+                      
                       <div className="flex gap-2">
-                        <button className="flex-1 h-10 bg-blue-500 text-white rounded-lg font-black uppercase text-[10px] tracking-widest hover:bg-blue-400 transition">Apply Now</button>
-                        <button className="w-10 h-10 bg-neutral-800 text-neutral-400 flex items-center justify-center rounded-lg hover:text-white transition"><Share2 size={16} /></button>
+                        <button 
+                          onClick={() => handleApply(job)}
+                          className="flex-1 h-12 bg-blue-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-500 transition shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
+                        >
+                          Apply Now <ExternalLink size={14} />
+                        </button>
+                        <button 
+                          onClick={() => handleShare(job)}
+                          className="w-12 h-12 bg-neutral-800 text-neutral-400 flex items-center justify-center rounded-xl hover:text-white transition hover:bg-neutral-700"
+                        >
+                          <Share2 size={18} />
+                        </button>
                       </div>
                     </motion.div>
                   ))}
