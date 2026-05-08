@@ -1,6 +1,5 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+import { generateSmartContent } from "./geminiService";
+import { safeJsonParse } from "../lib/jsonRepair";
 
 export interface TacticalCoupon {
   id: string;
@@ -15,8 +14,6 @@ export interface TacticalCoupon {
 }
 
 export const searchTacticalCoupons = async (query: string, category?: string): Promise<TacticalCoupon[]> => {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-  
   const prompt = `
     You are the 'Coupon Scout' for Versusfy.com. 
     A user is searching for coupons/deals for: ${query} in category: ${category || 'General'}.
@@ -39,12 +36,14 @@ export const searchTacticalCoupons = async (query: string, category?: string): P
   `;
 
   try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
-    const jsonStr = text.match(/\[.*\]/s)?.[0];
-    if (jsonStr) {
-      return JSON.parse(jsonStr);
-    }
+    const text = await generateSmartContent({
+      model: "gemini-3-flash-preview",
+      contents: prompt,
+      systemInstruction: "You are the Coupon Scout. Return ONLY a JSON array of tactical coupons."
+    });
+    
+    const coupons = safeJsonParse<TacticalCoupon[]>(text || '[]', []);
+    if (coupons.length > 0) return coupons;
   } catch (error) {
     console.error("Coupon search error:", error);
   }
@@ -86,27 +85,21 @@ export interface Coupon {
 }
 
 export const getCouponIntelligenceSpeech = async (query: string, count: number): Promise<string> => {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
   const prompt = `
     As 'Fenrir' (Coupon Scout), briefly report (max 2 sentences) that you have audited the network for ${query} and secured ${count} high-yield coupons. 
     Use tactical language like 'verified vectors', 'discount nodes', 'economic optimization'.
   `;
   try {
-    const result = await model.generateContent(prompt);
-    return result.response.text();
+    const text = await generateSmartContent({
+      model: "gemini-3-flash-preview",
+      contents: prompt,
+      systemInstruction: "You are Fenrir, the Coupon Scout. Speak tactically and professionally."
+    });
+    return text || `Coupon sensors synchronized. I have isolated ${count} verified discount nodes for your current objective.`;
   } catch {
     return `Coupon sensors synchronized. I have isolated ${count} verified discount nodes for your current objective.`;
   }
 };
-
-export interface Coupon {
-  id?: string;
-  code: string;
-  discount: string;
-  store: string;
-  description: string;
-  expiryDate: string;
-}
 
 export const getCouponsForProduct = async (productName: string): Promise<Coupon[]> => {
   const coupons = await searchTacticalCoupons(productName);

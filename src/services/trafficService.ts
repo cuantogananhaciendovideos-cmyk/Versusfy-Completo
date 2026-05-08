@@ -1,6 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+import { generateSmartContent } from "./geminiService";
 
 export interface TrafficStatus {
   city: string;
@@ -11,8 +9,6 @@ export interface TrafficStatus {
 }
 
 export const getTrafficAnalysis = async (city: string, userName?: string): Promise<string> => {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-  
   const prompt = `
     You are 'Fenrir', the Pathfinder Intelligence agent for Versusfy.com.
     The user is asking about traffic in: ${city}.
@@ -30,8 +26,12 @@ export const getTrafficAnalysis = async (city: string, userName?: string): Promi
   `;
 
   try {
-    const result = await model.generateContent(prompt);
-    return result.response.text();
+    const text = await generateSmartContent({
+      model: "gemini-3-flash-preview",
+      contents: prompt,
+      systemInstruction: "You are Fenrir, the Pathfinder Intelligence. Speak tactically about traffic and navigation."
+    });
+    return text || `Pathfinder Intelligence sensors reporting intermittent signal for ${city}. Tactical analysis suggests caution on main arteries. Check satellite layer for visual verification.`;
   } catch (error) {
     console.error("Traffic analysis error:", error);
     return `Pathfinder Intelligence sensors reporting intermittent signal for ${city}. Tactical analysis suggests caution on main arteries. Check satellite layer for visual verification.`;
