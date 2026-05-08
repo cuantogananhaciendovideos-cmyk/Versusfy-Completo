@@ -173,82 +173,92 @@ export const JobScout: React.FC<JobScoutProps> = ({ isOpen, onClose, detectedCit
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
-                  {results.jobs.map((job, idx) => (
-                    <motion.div 
-                      key={job.id || idx}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.1 }}
-                      className="bg-neutral-900 border border-neutral-800 p-5 rounded-2xl hover:border-blue-500/40 transition-all group relative overflow-hidden"
-                    >
-                      <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                        <Briefcase size={80} />
-                      </div>
+                  {results.jobs.length > 0 ? (
+                    results.jobs.map((job, idx) => (
+                      <motion.div 
+                        key={job.id || idx}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        className="bg-neutral-900 border border-neutral-800 p-5 rounded-2xl hover:border-blue-500/40 transition-all group relative overflow-hidden"
+                      >
+                        <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                          <Briefcase size={80} />
+                        </div>
 
-                      <div className="flex justify-between items-start mb-4 relative z-10">
-                        <div>
-                          <h3 className="text-xl font-black text-white italic tracking-tighter uppercase mb-1">{job.title}</h3>
-                          <p className="text-sm font-bold text-blue-500 uppercase tracking-wide">{job.company}</p>
-                        </div>
-                        <div className="p-3 bg-black rounded-xl border border-neutral-800 text-center min-w-[80px]">
-                          <p className="text-[10px] font-bold text-neutral-500 uppercase">Fit Score</p>
-                          <p className="text-lg font-black text-emerald-500 italic">{job.tacticalFit}%</p>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                        <div className="bg-black/40 p-2 rounded-lg border border-neutral-800/50">
-                          <p className="text-[8px] text-neutral-600 font-bold uppercase mb-1 flex items-center gap-1"><MapPin size={8} /> Location</p>
-                          <p className="text-[10px] font-bold text-white uppercase truncate">{job.location}</p>
-                        </div>
-                        <div className="bg-black/40 p-2 rounded-lg border border-neutral-800/50">
-                          <p className="text-[8px] text-neutral-600 font-bold uppercase mb-1 flex items-center gap-1"><DollarSign size={8} /> Salary</p>
-                          <p className="text-[10px] font-bold text-white uppercase truncate">{job.salary}</p>
-                        </div>
-                        <div className="bg-black/40 p-2 rounded-lg border border-neutral-800/50">
-                          <p className="text-[8px] text-neutral-600 font-bold uppercase mb-1 flex items-center gap-1"><ShieldCheck size={8} /> Posted</p>
-                          <p className="text-[10px] font-bold text-white uppercase truncate">{job.postedAt}</p>
-                        </div>
-                        <div className="bg-black/40 p-2 rounded-lg border border-neutral-800/50">
-                          <p className="text-[8px] text-neutral-600 font-bold uppercase mb-1 flex items-center gap-1"><Globe size={8} /> Source</p>
-                          <p className="text-[10px] font-bold text-white uppercase truncate">{job.source}</p>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-neutral-400 mb-4 line-clamp-2 italic">{job.description}</p>
-                      
-                      {/* Contact Info Block */}
-                      <div className="flex flex-wrap gap-4 mb-5 p-3 bg-black/30 rounded-xl border border-neutral-800/50">
-                        {job.contactEmail && (
-                          <div className="flex items-center gap-2">
-                            <Mail size={12} className="text-blue-400" />
-                            <span className="text-[10px] font-bold text-neutral-300 break-all">{job.contactEmail}</span>
+                        <div className="flex justify-between items-start mb-4 relative z-10">
+                          <div>
+                            <h3 className="text-xl font-black text-white italic tracking-tighter uppercase mb-1">{job.title}</h3>
+                            <p className="text-sm font-bold text-blue-500 uppercase tracking-wide">{job.company}</p>
                           </div>
-                        )}
-                        {job.contactPhone && (
-                          <div className="flex items-center gap-2">
-                            <Phone size={12} className="text-emerald-400" />
-                            <span className="text-[10px] font-bold text-neutral-300">{job.contactPhone}</span>
+                          <div className="p-3 bg-black rounded-xl border border-neutral-800 text-center min-w-[80px]">
+                            <p className="text-[10px] font-bold text-neutral-500 uppercase">Fit Score</p>
+                            <p className="text-lg font-black text-emerald-500 italic">{job.tacticalFit}%</p>
                           </div>
-                        )}
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                          <div className="bg-black/40 p-2 rounded-lg border border-neutral-800/50">
+                            <p className="text-[8px] text-neutral-600 font-bold uppercase mb-1 flex items-center gap-1"><MapPin size={8} /> Location</p>
+                            <p className="text-[10px] font-bold text-white uppercase truncate">{job.location}</p>
+                          </div>
+                          <div className="bg-black/40 p-2 rounded-lg border border-neutral-800/50">
+                            <p className="text-[8px] text-neutral-600 font-bold uppercase mb-1 flex items-center gap-1"><DollarSign size={8} /> Salary</p>
+                            <p className="text-[10px] font-bold text-white uppercase truncate">{job.salary}</p>
+                          </div>
+                          <div className="bg-black/40 p-2 rounded-lg border border-neutral-800/50">
+                            <p className="text-[8px] text-neutral-600 font-bold uppercase mb-1 flex items-center gap-1"><ShieldCheck size={8} /> Posted</p>
+                            <p className="text-[10px] font-bold text-white uppercase truncate">{job.postedAt}</p>
+                          </div>
+                          <div className="bg-black/40 p-2 rounded-lg border border-neutral-800/50">
+                            <p className="text-[8px] text-neutral-600 font-bold uppercase mb-1 flex items-center gap-1"><Globe size={8} /> Source</p>
+                            <p className="text-[10px] font-bold text-white uppercase truncate">{job.source}</p>
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-neutral-400 mb-4 line-clamp-2 italic">{job.description}</p>
+                        
+                        {/* Contact Info Block */}
+                        <div className="flex flex-wrap gap-4 mb-5 p-3 bg-black/30 rounded-xl border border-neutral-800/50">
+                          {job.contactEmail && (
+                            <div className="flex items-center gap-2">
+                              <Mail size={12} className="text-blue-400" />
+                              <span className="text-[10px] font-bold text-neutral-300 break-all">{job.contactEmail}</span>
+                            </div>
+                          )}
+                          {job.contactPhone && (
+                            <div className="flex items-center gap-2">
+                              <Phone size={12} className="text-emerald-400" />
+                              <span className="text-[10px] font-bold text-neutral-300">{job.contactPhone}</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => handleApply(job)}
+                            className="flex-1 h-12 bg-blue-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-500 transition shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
+                          >
+                            Apply Now <ExternalLink size={14} />
+                          </button>
+                          <button 
+                            onClick={() => handleShare(job)}
+                            className="w-12 h-12 bg-neutral-800 text-neutral-400 flex items-center justify-center rounded-xl hover:text-white transition hover:bg-neutral-700"
+                          >
+                            <Share2 size={18} />
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="p-12 text-center border-2 border-dashed border-neutral-800 rounded-3xl">
+                      <div className="w-16 h-16 bg-neutral-900 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-neutral-800">
+                         <Search className="text-neutral-500" size={32} />
                       </div>
-                      
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={() => handleApply(job)}
-                          className="flex-1 h-12 bg-blue-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-500 transition shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
-                        >
-                          Apply Now <ExternalLink size={14} />
-                        </button>
-                        <button 
-                          onClick={() => handleShare(job)}
-                          className="w-12 h-12 bg-neutral-800 text-neutral-400 flex items-center justify-center rounded-xl hover:text-white transition hover:bg-neutral-700"
-                        >
-                          <Share2 size={18} />
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))}
+                      <h3 className="text-xl font-black text-white italic tracking-tighter uppercase mb-2">Tactical Scan Failure</h3>
+                      <p className="text-sm text-neutral-500 max-w-xs mx-auto">No job nodes detected in the current sector. Try broadening your parameters or target a different region.</p>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}
