@@ -46,6 +46,7 @@ import { FuelScout } from './components/FuelScout';
 import { WaterGuardian } from './components/WaterGuardian';
 import { GasMaster } from './components/GasMaster';
 import { JobScout } from './components/JobScout';
+import { VersusfyCommunity } from './components/VersusfyCommunity';
 import { CouponScout } from './components/CouponScout';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import DailyInsights from './components/DailyInsights';
@@ -146,6 +147,7 @@ export default function App() {
   const [selectedAgentMode, setSelectedAgentMode] = useState<'style' | 'space' | 'gardening' | 'mechanic' | 'builder' | 'office' | 'energy' | 'pharmacy' | 'toy' | 'gamer' | 'academic' | 'musical' | 'job' | 'pathfinder' | 'coupon' | undefined>(undefined);
   const [footerStats, setFooterStats] = useState({ savings: 0, deals: 0 });
   const [showHeroShare, setShowHeroShare] = useState(false);
+  const [isCommunityOpen, setIsCommunityOpen] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [heroSavingsAmount, setHeroSavingsAmount] = useState<number | undefined>(undefined);
   const confettiCanvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -2564,6 +2566,17 @@ const ComparisonResultView = ({
                 </div>
               </button>
 
+              <button 
+                onClick={() => setIsCommunityOpen(true)}
+                className="group relative px-8 py-3 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+              >
+                <Users className="text-emerald-green" size={20} />
+                <span className="text-white font-black uppercase tracking-tighter italic">Versusfy Community</span>
+                <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full animate-pulse">
+                  NEW
+                </div>
+              </button>
+
               <div className="flex flex-wrap justify-center gap-2 md:gap-3 px-2">
               {[
                 { id: 'standard', label: 'Products', icon: ShoppingBag, color: 'bg-emerald-green' },
@@ -3089,6 +3102,7 @@ const ComparisonResultView = ({
           <button onClick={() => setView('about')} className="flex items-center gap-1 hover:text-white transition"><Info size={14}/> About</button>
           <button onClick={() => setView('faq')} className="flex items-center gap-1 hover:text-white transition"><HelpCircle size={14}/> FAQ</button>
           <button onClick={() => setView('benefits')} className="flex items-center gap-1 hover:text-white transition"><Info size={14}/> Benefits</button>
+          <button onClick={() => setIsCommunityOpen(true)} className="flex items-center gap-1 hover:text-white transition font-black text-blue-500"><Users size={14}/> Community</button>
           <button onClick={() => setView('global-intel')} className="flex items-center gap-1 hover:text-white transition font-black text-emerald-green"><Globe size={14}/> Intel</button>
           <button onClick={() => setView('privacy')} className="flex items-center gap-1 hover:text-white transition"><ShieldCheck size={14}/> Privacy</button>
           <button onClick={() => setView('contact')} className="flex items-center gap-1 hover:text-white transition"><Mail size={14}/> Contact</button>
@@ -3102,6 +3116,15 @@ const ComparisonResultView = ({
           </div>
         )}
       </footer>
+
+      <AnimatePresence>
+        {isCommunityOpen && (
+          <VersusfyCommunity 
+            isOpen={isCommunityOpen} 
+            onClose={() => setIsCommunityOpen(false)} 
+          />
+        )}
+      </AnimatePresence>
 
       <canvas 
         ref={confettiCanvasRef}

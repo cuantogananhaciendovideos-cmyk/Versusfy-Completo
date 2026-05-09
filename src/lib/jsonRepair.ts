@@ -48,6 +48,19 @@ export function repairJson(jsonString: string): string {
   // 1. Remove Markdown code blocks if present (redundant if substep above worked but safe)
   cleaned = cleaned.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
 
+  // FIX: Common AI error where it spits out "key" "value" instead of "key": "value"
+  // This is a common failure mode for some models under pressure.
+  cleaned = cleaned.replace(/"([^"]+)"\s+"([^"]+)"/g, '"$1": "$2"');
+  // FIX: Handle missing colons for numbers, booleans, and null
+  cleaned = cleaned.replace(/"([^"]+)"\s+([0-9.]+|true|false|null)/g, '"$1": $2');
+  
+  // FIX: Common AI error where it forgets a comma between entries
+  // e.g., "val" "key": "val" -> "val", "key": "val"
+  cleaned = cleaned.replace(/"\s+"([^"]+)":/g, '", "$1":');
+  cleaned = cleaned.replace(/([0-9.]+|true|false|null)\s+"([^"]+)":/g, '$1, "$2":');
+  // FIX: More aggressive comma fixing for objects in arrays
+  cleaned = cleaned.replace(/}\s+{/g, '}, {');
+
   if (!cleaned) return '';
 
   // 2. Count brackets and braces

@@ -23,47 +23,36 @@ export interface JobAnalysis {
 }
 
 export const scanLocalJobs = async (query: string, city: string, state: string, country: string): Promise<JobAnalysis> => {
-  const prompt = `Perform a tactical scan for REAL jobs matching "${query}" in ${city}, ${state}, ${country}. 
-  Provide a list of 5 diverse job opportunities. For each job, include:
-  - id: a unique short identifier
-  - title: the EXACT job title
-  - company: REAL company name
-  - location: the specific area in ${city} or the exact site address
-  - salary: realistic annual or hourly pay for this role
-  - description: 2-sentence tactical summary of duties
-  - source: where the job was found (e.g., LinkedIn, Indeed, Company Site)
-  - postedAt: e.g., "2 hours ago", "Yesterday"
-  - tacticalFit: a number from 0 to 100 based on the match for "${query}"
-  - contactEmail: a realistic contact email for this role
-  - contactPhone: a realistic contact phone number
-  - applyUrl: the actual URL or a professional career link
+  const prompt = `TACTICAL SEARCH PARAMETERS:
+  TARGET: REAL and ACTIVE jobs matching "${query}"
+  LOCATION: ${city}, ${state}, ${country}
+  DATA FIDELITY: ELITE (No generic placeholders, no "Remote Virtual")
   
-  Also provide:
-  - marketOverview: A 2-sentence tactical summary of the job market in ${city} specifically for ${query}.
-  - spokenResponse: A charismatic and professional summary in English (max 3 sentences).
-
-  CRITICAL: DO NOT return placeholder text like "Remote Virtual". Find or simulate REALISTIC local opportunities for "${query}".
-  Return ONLY a valid JSON object matching this structure:
+  TASK: Extract 5 high-yield job opportunities from the sector.
+  
+  REQUIRED JSON STRUCTURE (STRICT):
   {
     "jobs": [
       {
         "id": "J1",
-        "title": "...",
-        "company": "...",
-        "location": "...",
-        "salary": "...",
-        "description": "...",
-        "source": "...",
-        "postedAt": "...",
-        "tacticalFit": 85,
-        "contactEmail": "...",
-        "contactPhone": "...",
-        "applyUrl": "..."
+        "title": "Exact Role Title",
+        "company": "Real Company Name",
+        "location": "Address or Neighborhood in ${city}",
+        "salary": "$X/hr or $Xk/yr",
+        "description": "2-sentence tactical summary",
+        "source": "Platform/Source",
+        "postedAt": "Time relative to now",
+        "tacticalFit": 95,
+        "contactEmail": "hr@example.com",
+        "contactPhone": "555-000-0000",
+        "applyUrl": "https://company.com/careers"
       }
     ],
-    "marketOverview": "...",
-    "spokenResponse": "..."
-  }`;
+    "marketOverview": "Brief sector audit.",
+    "spokenResponse": "Elite mission summary (English, max 3 sentences)."
+  }
+
+  CRITICAL: Return ONLY the JSON object. No preamble, no markdown tags. Ensure all colons and commas are present.`;
 
   try {
     const text = await generateSmartContent({

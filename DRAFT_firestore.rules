@@ -27,6 +27,10 @@ service cloud.firestore {
       return resource.data;
     }
 
+    function isServerTime(field) {
+      return incoming()[field] == request.time;
+    }
+
     function isValidId(id) {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
@@ -41,20 +45,17 @@ service cloud.firestore {
 
     function isValidForumPost(data) {
       return data.keys().hasAll(['isAnonymous', 'content', 'likes', 'hearts', 'rating', 'createdAt']) 
-        && data.keys().size() <= 14
+        && data.keys().size() <= 11 // Adjusted for optional fields
         && data.isAnonymous is bool
         && isValidString(data.content, 2000)
-        && data.likes is int && data.likes == 0
+        && data.likes is int && data.likes == 0 // Only 0 on create
         && data.hearts is int && data.hearts == 0
         && data.rating is int && data.rating >= 1 && data.rating <= 5
         && data.createdAt == request.time
         && (!data.isAnonymous ? (data.firstName is string && data.lastName is string) : true)
         && (data.has('photoUrl') ? isValidString(data.photoUrl, 500) : true)
         && (data.has('sharedImage') ? isValidString(data.sharedImage, 500) : true)
-        && (data.has('heroTicketId') ? isValidString(data.heroTicketId, 100) : true)
-        && (data.has('fontFamily') ? isValidString(data.fontFamily, 100) : true)
-        && (data.has('fontSize') ? isValidString(data.fontSize, 100) : true)
-        && (data.has('color') ? isValidString(data.color, 20) : true);
+        && (data.has('heroTicketId') ? isValidString(data.heroTicketId, 100) : true);
     }
 
     // ===============================================================
@@ -62,13 +63,14 @@ service cloud.firestore {
     // ===============================================================
 
     match /forum_posts/{postId} {
-      allow list: if true; 
+      allow list: if true; // Everyone can see the tactical feed
       allow get: if isValidId(postId);
 
       allow create: if isValidId(postId) 
         && isValidForumPost(incoming());
 
       allow update: if isValidId(postId) && (
+        // Action: Engagement (Likes/Hearts)
         (
           incoming().diff(existing()).affectedKeys().hasOnly(['likes']) 
           && incoming().likes == existing().likes + 1
@@ -79,13 +81,13 @@ service cloud.firestore {
         )
       );
 
-      allow delete: if false; 
+      allow delete: if false; // Only sysadmins can delete tactical records
     }
 
     // Hardened existing rules
     match /marketing_phrases/{phraseId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if false; // Locked from client side
     }
 
     match /visitors/{visitorId} {

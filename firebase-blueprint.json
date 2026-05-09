@@ -1,35 +1,29 @@
 {
   "entities": {
-    "PathfinderVote": {
-      "title": "Pathfinder Vote",
-      "description": "User votes for the Pathfinder Intelligence agent",
+    "ForumPost": {
+      "title": "Forum Post",
+      "description": "A community post shared by a Versusfy user.",
       "type": "object",
       "properties": {
-        "vote": { "type": "string", "enum": ["up", "down"] },
-        "timestamp": { "type": "string", "format": "date-time" },
-        "userId": { "type": "string" }
+        "firstName": { "type": "string", "description": "Poster's first name" },
+        "lastName": { "type": "string", "description": "Poster's last name" },
+        "isAnonymous": { "type": "boolean", "description": "Whether the identity is masked" },
+        "content": { "type": "string", "description": "The main tactical insight or gossip" },
+        "photoUrl": { "type": "string", "description": "Avatar URL" },
+        "sharedImage": { "type": "string", "description": "Uploaded image or ticket URL" },
+        "heroTicketId": { "type": "string", "description": "Optional Hero Ticket reference" },
+        "likes": { "type": "number", "description": "Number of stars/likes" },
+        "hearts": { "type": "number", "description": "Number of hearts" },
+        "rating": { "type": "number", "description": "1-5 star rating" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp" }
       },
-      "required": ["vote", "timestamp"]
-    },
-    "AgentStats": {
-      "title": "Agent Stats",
-      "description": "Aggregated stats for agents",
-      "type": "object",
-      "properties": {
-        "upVotes": { "type": "integer" },
-        "downVotes": { "type": "integer" },
-        "totalVotes": { "type": "integer" }
-      }
+      "required": ["isAnonymous", "content", "likes", "hearts", "rating", "createdAt"]
     }
   },
   "firestore": {
-    "pathfinder_votes": {
-      "schema": "PathfinderVote",
-      "description": "Individual votes for Pathfinder agent"
-    },
-    "stats/pathfinder": {
-      "schema": "AgentStats",
-      "description": "Aggregated stats for Pathfinder agent"
+    "forum_posts/{postId}": {
+      "schema": "ForumPost",
+      "description": "Collection of community forum posts."
     }
   }
 }

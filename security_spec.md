@@ -1,25 +1,28 @@
-# Versusfy Security Specification
+# Security Spec for Versusfy Community Forum
 
-## Data Invariants
-1. **Trending Comparisons**: Only system-generated (or admin) can create/update. Public can read.
-2. **Trending Votes**: Public can increment `likes` by exactly 1. Public can increment `ratingCount` and `totalRating`.
-3. **Comparisons**: Primary app logic. Anyone can read, only valid shapes can be created.
+## 1. Data Invariants
+- Posts must have a valid rating (1-5).
+- Content cannot exceed 2000 characters to prevent resource exhaustion.
+- Likes and Hearts can only be incremented, not arbitrarily set.
+- `createdAt` must be `request.time`.
+- If `isAnonymous` is false, `firstName` and `lastName` must be provided and be valid strings.
 
-## The Dirty Dozen (Attack Scenarios)
-1. **ID Poisoning**: Attempt to create a document with a 2MB string as ID.
-2. **Mass Update**: Attempt to update `likes` from 0 to 1,000,000 in one write.
-3. **Ghost Field Injection**: Add `isVerified: true` to a trending vote to gain privileges.
-4. **Identity Spoofing**: Set `userId` to another user's UID in `shopping_desires`.
-5. **Rating Deletion**: Negative stars or resetting `totalVotes`.
-6. **Schema Break**: Send `text` as an integer instead of a string in `comparisons`.
-7. **Recursive Write**: Attempting to trigger infinite loops (not directly possible but logic-wise).
-8. **PII Leak**: Reading `visitors` data without proper auth (if it contained sensitive info).
-9. **Role Escalation**: Setting `isAdmin: true` on a user document.
-10. **Timestamp Fraud**: Providing a client-side `createdAt` from the future.
-11. **Relational Orphan**: Creating a sub-resource without a parent.
-12. **Blanket List Scraping**: Querying all collections without filters.
+## 2. The Dirty Dozen Payloads (Targeting forum_posts)
 
-## Test Runner (Logic)
-- All writes without authentication (where required) -> DENIED.
-- All writes with invalid schema -> DENIED.
-- All writes exceeding size limits -> DENIED.
+1. **The ID Poisoning**: `create` with a 2MB string as document ID.
+2. **The Shadow Field**: `create` with `{ "ghost": "payload", "content": "valid" }`.
+3. **The Rating Overflow**: `create` with `rating: 99`.
+4. **The Identity Spoof**: `update` to change `isAnonymous` from `false` to `true` on someone else's post.
+5. **The Like Bomb**: `update` to set `likes: 1000000` in one request.
+6. **The Negative Spark**: `update` to set `hearts: -1`.
+7. **The Time Warp**: `create` with `createdAt` set to a date in 1999.
+8. **The PII Leak**: `list` query that attempts to scrape all non-anonymous names (Rules must enforce list boundaries).
+9. **The Gigantism**: `create` with `content` containing 5MB of text.
+10. **The Orphan Write**: `create` with a fake `heroTicketId` that doesn't exist (if checked).
+11. **The Field Hijack**: `update` to change the `content` of an existing post.
+12. **The Delete Rampage**: `delete` on a post by a random guest.
+
+## 3. Test Strategy
+- Every write MUST pass `isValidForumPost()`.
+- Updates are restricted to engagement counters (likes/hearts) only for non-owners.
+- Deletion is restricted (e.g., only by moderator or creator - though creator identification is hard without auth).
